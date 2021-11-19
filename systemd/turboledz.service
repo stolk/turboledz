@@ -1,0 +1,13 @@
+[Unit]
+Description=Turbo LEDz service
+After=systemd-udevd.service
+
+[Service]
+Type=simple
+User=daemon
+ExecStart=/usr/bin/turboledzd
+KillMode=control-group
+
+[Install]
+WantedBy=multi-user.target
+

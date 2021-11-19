@@ -1,0 +1,8 @@
+Package: turboledz
+Version: 1.0
+Architecture: amd64
+Maintainer: Bram Stolk <b.stolk@gmail.com>
+Depends: libhidapi-hidraw0
+Installed-Size: 20
+Homepage: http://turboledz.com
+Description: controls the Turbo LEDz devices based on system's activity.

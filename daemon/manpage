@@ -1,0 +1,41 @@
+.\" Manpage for turboledzd.
+.\" Contact b.stolk@gmail.com to correct errors or typos.
+.TH man 1 "24 Sep 2021" "1.0" "sysblinkd man page"
+.SH NAME
+sysblinkd \- Turbo LEDz daemon
+.SH SYNOPSIS
+sysblinkd
+.SH DESCRIPTION
+turboledzd is a daemon process that is started by systemd at boot-time to control the LEDs of the custom Turbo LEDz devices.
+.SH OPTIONS
+turboledzd does not take any options, but you can control its function via the configuration file at /etc/turboledz.conf
+.SH CONFIGURATION FILE
+The configuration file is located at /etc/turboledz.conf and supports the following options:
+.SS mode
+This sets the mode on what to graph: cpu, gpu, net, etc. Currently, only cpu is implemented.
+  mode=cpu
+  mode=gpu
+  mode=net
+.SS freq
+This sets the update frequency in Hz.
+  freq=10
+.SS segm
+This sets the number of segments per bar. Some models have 10 segments. Some models have 8 segments.
+  segm=10
+.SH Launching
+When a Turbo LEDz device is plugged in, and has not yet been contacted by the daemon, the device will display a scrolling wave.
+Once the daemon talks to the device, this wave is replaced by live CPU statistics.
+When the host OS goes to sleep, it will reinstate the wave-animation on the device.
+.BR
+This daemon is typically launched as a service by systemd. To start the service, use:
+  systemctl start turboledz
+To stop the service:
+  systemctl stop turboledz
+To check the status of the service:
+  systemctl status turboledz
+.SH SEE ALSO
+.SH BUGS
+No known bugs.
+.SH AUTHOR
+Bram Stolk (b.stolk@gmail.com)
+

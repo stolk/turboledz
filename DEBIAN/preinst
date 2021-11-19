@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# If there is a raw hid device plugged in, at the moment, that is a Turbo LEDz device,
+# we should change its device permissions ahead of time.
+# Once installed, this package relies on a udev rule entry to set correct permissions.
+# But we cannot rely on udev for doing that on HID devices that are already plugged in.
+
+FILES="/dev/hidraw*"
+
+for f in $FILES
+do
+	bf=`basename $f`
+	nm="/sys/class/hidraw/$bf/device/uevent"
+	if grep -q LEDz $nm; then
+		echo "Processing $f"
+		chmod 666 $f
+	else
+		echo "Skipping $f"
+	fi
+done
+

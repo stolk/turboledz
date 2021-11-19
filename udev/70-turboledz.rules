@@ -1,0 +1,7 @@
+# Make Vendor "Arduino LLC", Product "Arduino Micro" accessible for non-root users.
+# Note: BUS 1 is USB.
+
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="8037", MODE="0666"
+
+KERNEL=="hidraw*", ATTRS{busnum}=="1", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="8037", MODE="0666"
+

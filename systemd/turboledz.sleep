@@ -1,0 +1,14 @@
+#!/bin/sh
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+
+case "$1" in
+	pre)	systemctl kill --signal SIGUSR1 turboledz
+		exit 0
+		;;
+	post)	systemctl kill --signal SIGUSR2 turboledz
+		exit 0
+		;;
+ 	*)	exit 1
+		;;
+esac
