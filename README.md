@@ -40,6 +40,14 @@ $ make turboledz-1.0.deb
 $ sudo dpkg -i turboledz-1.0.deb
 ```
 
+## Running
+
+Turbo LEDz devices show up a rawhid devices in `/dev/hidrawX` which need to have user access `rwx`.
+This can be automatically set with a udev rule.
+
+You can run turboledzd straight from the command-line, as user, to test.
+The Debian package will set up a systemd service, and run the process under the daemon user.
+
 ## Known issues
 
 ## Copyright

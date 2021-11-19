@@ -2,9 +2,9 @@
 .\" Contact b.stolk@gmail.com to correct errors or typos.
 .TH man 1 "24 Sep 2021" "1.0" "sysblinkd man page"
 .SH NAME
-sysblinkd \- Turbo LEDz daemon
+turboledzd \- Turbo LEDz daemon
 .SH SYNOPSIS
-sysblinkd
+turboledzd
 .SH DESCRIPTION
 turboledzd is a daemon process that is started by systemd at boot-time to control the LEDs of the custom Turbo LEDz devices.
 .SH OPTIONS
