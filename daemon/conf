@@ -1,4 +1,3 @@
 # Sample configuration for /etc/turboledz.conf
 freq=10
 mode=cpu
-segm=10

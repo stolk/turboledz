@@ -28,8 +28,10 @@
 // More than 6 Turbo LEDz devices in a single PC would be silly.
 #define MAXDEVS			6
 
-enum model_t {
-	MODEL_108=1,
+enum model
+{
+	MODEL_UNKNOWN=0,
+	MODEL_108,
 	MODEL_810,
 	MODEL_810s,
 	MODEL_810c,
@@ -41,6 +43,12 @@ static int		numdevs;
 // Which Turbo LEDz devices did we find?
 static hid_device*	hds[MAXDEVS];
 
+// What model numbers are the devices that we found?
+static enum model	mod[MAXDEVS];
+
+// What number of segments do the LED bars have for this device?
+static int		seg[MAXDEVS];
+
 // Number of (virtual) cores this host PC has.
 static int		numcpu=0;
 
@@ -49,9 +57,6 @@ static int		opt_freq=10;
 
 // Specified in config file: currently only "cpu" is implemented.
 static char		opt_mode[80];
-
-// Specified in config file: 
-static int		opt_segm=8;
 
 // When paused, we don't collect data, nor send it to the device.
 static int		paused=0;
@@ -108,13 +113,6 @@ static int read_config(void)
 					strncpy( opt_mode, s+5, sizeof(opt_mode) );
 					parsed++;
 				}
-				if ( !strncmp( s, "segm=", 5 ) )
-				{
-					int segm = atoi( s+5 );
-					if ( segm == 8 || segm == 10 )
-						opt_segm = segm;
-					parsed++;
-				}
 			}
 		}
 	}
@@ -160,6 +158,20 @@ static void sig_handler( int signum )
 }
 
 
+static enum model get_model(const wchar_t* modelname)
+{
+	if ( !wcscmp( modelname, L"810c" ) )
+		return MODEL_810c;
+	if ( !wcscmp( modelname, L"810s" ) )
+		return MODEL_810s;
+	if ( !wcscmp( modelname, L"810" ) )
+		return MODEL_810;
+	if ( !wcscmp( modelname, L"108" ) )
+		return MODEL_108;
+	return MODEL_UNKNOWN;
+}
+
+
 // We are passed a set of HID devices that matched our enumeration.
 // Here, we should examine them, and select one to open.
 static int select_and_open_device( struct hid_device_info* devs )
@@ -168,6 +180,7 @@ static int select_and_open_device( struct hid_device_info* devs )
 	struct hid_device_info* cur_dev = devs;
 	int count=0;
 	const char* filenames[16]={ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, };
+	enum model models[16];
 	int rv=0;
 
 	while (cur_dev)
@@ -185,9 +198,14 @@ static int select_and_open_device( struct hid_device_info* devs )
 		{
 			if ( !wcsncmp( cur_dev->product_string, L"Turbo LEDz", 10 ) )
 			{
-				printf("Detected model: %ls\n", cur_dev->product_string+11);
+				const wchar_t* prodname = cur_dev->product_string+11;
+				printf("Detected model: %ls\n", prodname);
 				if ( count<16 )
-					filenames[count++] = cur_dev->path;
+				{
+					filenames[count] = cur_dev->path;
+					models[count] = get_model(prodname);
+					count++;
+				}
 			}
 		}
 		else
@@ -232,7 +250,10 @@ static int select_and_open_device( struct hid_device_info* devs )
 		hid_set_nonblocking(handle, 0);
 		if ( numdevs < MAXDEVS )
 		{
-			hds[ numdevs++ ] = handle;
+			hds[ numdevs ] = handle;
+			mod[ numdevs ] = models[i];
+			seg[ numdevs ] = (models[i] == MODEL_108) ? 8 : 10;
+			numdevs++;
 			rv++;
 		}
 	}
@@ -323,10 +344,10 @@ int service( void )
 		{
 			float usages[ numcpu ];
 			get_usages( 1, usages );
-			int bars = (int) ( 0.5f + ( (opt_segm-FLT_EPSILON) * usages[0] ) );
-			uint8_t rep[2] = { 0x00, bars | 0x80 };
 			for ( int i=0; i<numdevs; ++i )
 			{
+				int bars = (int) ( 0.5f + ( (seg[i]-FLT_EPSILON) * usages[0] ) );
+				uint8_t rep[2] = { 0x00, bars | 0x80 };
 				hid_device* hd = hds[i];
 				const int written = hid_write( hd, rep, sizeof(rep) );
 				if ( written < 0 )

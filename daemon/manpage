@@ -19,9 +19,6 @@ This sets the mode on what to graph: cpu, gpu, net, etc. Currently, only cpu is 
 .SS freq
 This sets the update frequency in Hz.
   freq=10
-.SS segm
-This sets the number of segments per bar. Some models have 10 segments. Some models have 8 segments.
-  segm=10
 .SH LAUNCHING
 When a Turbo LEDz device is plugged in, and has not yet been contacted by the daemon, the device will display a scrolling wave.
 Once the daemon talks to the device, this wave is replaced by live CPU statistics.
