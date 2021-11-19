@@ -22,18 +22,22 @@ This sets the update frequency in Hz.
 .SS segm
 This sets the number of segments per bar. Some models have 10 segments. Some models have 8 segments.
   segm=10
-.SH Launching
+.SH LAUNCHING
 When a Turbo LEDz device is plugged in, and has not yet been contacted by the daemon, the device will display a scrolling wave.
 Once the daemon talks to the device, this wave is replaced by live CPU statistics.
 When the host OS goes to sleep, it will reinstate the wave-animation on the device.
 .BR
 This daemon is typically launched as a service by systemd. To start the service, use:
-  systemctl start turboledz
+  $ sudo systemctl start turboledz
+
 To stop the service:
-  systemctl stop turboledz
+  $ sudo systemctl stop turboledz
+
 To check the status of the service:
-  systemctl status turboledz
+  $systemctl status turboledz
+
 .SH SEE ALSO
+  systemctl
 .SH BUGS
 No known bugs.
 .SH AUTHOR
