@@ -34,9 +34,10 @@ To build the daemon, use:
 $ make
 ```
 
-To build a debian package, use:
+To build and install a debian package, use:
 ```
 $ make turboledz-1.0.deb
+$ sudo dpkg -i turboledz-1.0.deb
 ```
 
 ## Known issues
