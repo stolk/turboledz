@@ -20,9 +20,20 @@
 
 #include <hidapi/hidapi.h>
 
+// So far, all Turbo LEDz devices made are based on Arduino Pro Micro, so we don't need to check for Adafruit SAMD devices.
+// If this changes in the future, we should check for devices other than Arduino Pro Micro too.
+#define TRY_ADAFRUIT_DEVICES	0
 
-static hid_device*	hd=0;
+// More than 6 Turbo LEDz devices in a single PC would be silly.
+#define MAXDEVS			6
 
+// Howmany Turbo LEDz devices did we find?
+static int		numdevs;
+
+// Which Turbo LEDz devices did we find?
+static hid_device*	hds[MAXDEVS];
+
+// Number of (virtual) cores this host PC has.
 static int		numcpu=0;
 
 // Specified in config file: update frequency in Hertz.
@@ -34,13 +45,18 @@ static char		opt_mode[80];
 // Specified in config file: 
 static int		opt_segm=8;
 
+// When paused, we don't collect data, nor send it to the device.
 static int		paused=0;
 
 
 static void cleanup(void)
 {
-	hid_close(hd);
-	hd=0;
+	for ( int i=0; i<numdevs; ++i )
+	{
+		hid_device* hd = hds[i];
+		hid_close(hd);
+		hds[i] = 0;
+	}
 	hid_exit();
 }
 
@@ -119,9 +135,13 @@ static void sig_handler( int signum )
 		fprintf( stderr, "Preparing to go to sleep...\n" );
 		const uint8_t rep[2] = { 0x00, 0x40 };
 		usleep(40000);
-		const int written = hid_write( hd, rep, sizeof(rep) );
-		if (written<0)
-			fprintf( stderr,"hid_write() failed for %zu bytes with: %ls\n", sizeof(rep), hid_error(hd) );
+		for ( int i=0; i<numdevs; ++i )
+		{
+			hid_device* hd = hds[i];
+			const int written = hid_write( hd, rep, sizeof(rep) );
+			if (written<0)
+				fprintf( stderr,"hid_write() failed for %zu bytes with: %ls\n", sizeof(rep), hid_error(hd) );
+		}
 		usleep(40000);
 	}
 	if ( signum == SIGUSR2 )
@@ -134,12 +154,13 @@ static void sig_handler( int signum )
 
 // We are passed a set of HID devices that matched our enumeration.
 // Here, we should examine them, and select one to open.
-static hid_device* select_and_open_device( struct hid_device_info* devs )
+static int select_and_open_device( struct hid_device_info* devs )
 {
 	hid_device* handle = 0;
 	struct hid_device_info* cur_dev = devs;
 	int count=0;
 	const char* filenames[16]={ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, };
+	int rv=0;
 
 	while (cur_dev)
 	{
@@ -196,9 +217,14 @@ static hid_device* select_and_open_device( struct hid_device_info* devs )
 		fprintf(stderr,"Opened hid device at %s\n", fname);
 		// We like to be blocked.
 		hid_set_nonblocking(handle, 0);
+		if ( numdevs < MAXDEVS )
+		{
+			hds[ numdevs++ ] = handle;
+			rv++;
+		}
 	}
 
-	return handle;
+	return rv;	// return the nr of devices we opened.
 }
 
 
@@ -286,12 +312,16 @@ int service( void )
 			get_usages( 1, usages );
 			int bars = (int) ( 0.5f + ( (opt_segm-FLT_EPSILON) * usages[0] ) );
 			uint8_t rep[2] = { 0x00, bars | 0x80 };
-			const int written = hid_write( hd, rep, sizeof(rep) );
-			if ( written < 0 )
+			for ( int i=0; i<numdevs; ++i )
 			{
-				fprintf( stderr, "hid_write for %zu bytes failed with: %ls\n", sizeof(rep), hid_error(hd) );
-				cleanup();
-				exit(EX_IOERR);
+				hid_device* hd = hds[i];
+				const int written = hid_write( hd, rep, sizeof(rep) );
+				if ( written < 0 )
+				{
+					fprintf( stderr, "hid_write for %zu bytes failed with: %ls\n", sizeof(rep), hid_error(hd) );
+					cleanup();
+					exit(EX_IOERR);
+				}
 			}
 		}
 		usleep( delay );
@@ -320,37 +350,42 @@ int main( int argc, char* argv[] )
 		return 1;
 	}
 
-//	struct hid_device_info* devs_adafruit = hid_enumerate( 0x239a, 0x801e );
-//	struct hid_device_info* devs_adafruit = hid_enumerate( 0x239a, 0 );
-	struct hid_device_info* devs_adafruit = hid_enumerate( 0, 0x801e );
-	struct hid_device_info* devs_arduino  = hid_enumerate( 0x2341, 0x8037 );
+	struct hid_device_info* devs_adafruit=0;
+	struct hid_device_info* devs_arduino=0;
+#if TRY_ADAFRUIT_DEVICES
+	devs_adafruit = hid_enumerate( 0x239a, 0x801e );
+#endif
+	devs_arduino  = hid_enumerate( 0x2341, 0x8037 );
 
 	if ( !devs_arduino && !devs_adafruit )
 	{
-		fprintf(stderr,"No suitable devices were found. Neither arduino based nor adafruit-samd based.\n");
+		fprintf(stderr,"No Turbo LEDz devices were found.\n");
 		return 1;
 	}
 
 	if ( devs_arduino )
 	{
 		fprintf(stderr, "Looking at arduino devices...\n");
-		hd = select_and_open_device( devs_arduino );
+		const int num = select_and_open_device( devs_arduino );
+		fprintf(stderr, "Found %d.\n",num);
 		hid_free_enumeration(devs_arduino);
 	}
 
+#if TRY_ADAFRUIT_DEVICES
 	if ( devs_adafruit )
 	{
 		fprintf(stderr, "Looking at adafruit devices...\n");
-		hd = select_and_open_device( devs_adafruit );
+		const int num = select_and_open_device( devs_adafruit );
+		fprintf(stderr, "Found %d.\n",num);
 		hid_free_enumeration(devs_adafruit);
 	}
+#endif
 
-	if ( !hd )
+	if ( numdevs== 0 )
 	{
 		fprintf(stderr,"Failed to select and open device.\n");
 		return 1;
 	}
-
 
 	fprintf( stderr, "Mode=%s Freq=%d numcpu=%d\n", opt_mode, opt_freq, numcpu );
 	int rv = service();
