@@ -5,7 +5,7 @@
 
 CC=cc
 
-CFLAGS=-g
+CFLAGS=-g -Wall -Wextra
 
 PKG=turboledz-1.0
 
@@ -36,5 +36,5 @@ package: $(PKG).deb
 
 clean:
 	rm -f $(PKG).deb
-	rm -f turboledzd
+	rm -f daemon/turboledzd
 

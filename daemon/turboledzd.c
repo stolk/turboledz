@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <float.h>
+#include <errno.h>
 #include <sysexits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -26,6 +27,13 @@
 
 // More than 6 Turbo LEDz devices in a single PC would be silly.
 #define MAXDEVS			6
+
+enum model_t {
+	MODEL_108=1,
+	MODEL_810,
+	MODEL_810s,
+	MODEL_810c,
+};
 
 // Howmany Turbo LEDz devices did we find?
 static int		numdevs;
@@ -191,24 +199,29 @@ static int select_and_open_device( struct hid_device_info* devs )
 
 	fprintf( stderr, "Found %d Turbo LEDz devices.\n", count );
 
-	if ( count>0 )
+	for ( int i=0; i<count; ++i )
 	{
 		// First check if permissions are good on the /dev/rawhidX file.
 		struct stat statRes;
-		const char* fname = filenames[0];
-		int r = stat( fname, &statRes );
+		const char* fname = filenames[i];
+		const int r = stat( fname, &statRes );
+		if ( r )
+		{
+			fprintf(stderr,"Error: stat() failed with %s on %s\n", strerror(errno), fname);
+			exit(EX_NOINPUT);
+		}
 		mode_t bits = statRes.st_mode;
 		if ((bits & S_IRUSR) == 0)
 		{
 			fprintf(stderr,"Error: No user read-permission for %s\n", fname);
-			exit(4);
+			exit(EX_NOPERM);
 		}
 		if ((bits & S_IWUSR) == 0)
 		{
 			fprintf(stderr,"Error: No user write-permission for %s\n", fname);
 			exit(EX_NOPERM);
 		}
-		handle = hid_open_path( filenames[0] );
+		handle = hid_open_path( filenames[i] );
 		if (!handle)
 		{
 			fprintf(stderr,"Error: hid_open_path() on %s failed : %ls\n", fname, hid_error(handle));
@@ -249,7 +262,7 @@ static void get_usages(int num, float* usages)
 	FILE* f = fopen( "/proc/stat", "rb" );
 	assert(f);
 	char info[16384];
-	const int numr = fread( info, 1, sizeof(info), f );
+	const size_t numr = fread( info, 1, sizeof(info)-1, f );
 	fclose(f);
 
 	assert( numr < sizeof(info) );
@@ -332,6 +345,8 @@ int service( void )
 
 int main( int argc, char* argv[] )
 {
+	(void)argc;
+	(void)argv;
 	strncpy( opt_mode, "cpu", sizeof(opt_mode) );
 	read_config();
 
@@ -367,7 +382,7 @@ int main( int argc, char* argv[] )
 	{
 		fprintf(stderr, "Looking at arduino devices...\n");
 		const int num = select_and_open_device( devs_arduino );
-		fprintf(stderr, "Found %d.\n",num);
+		fprintf(stderr, "Opened %d devices.\n",num);
 		hid_free_enumeration(devs_arduino);
 	}
 
@@ -376,7 +391,7 @@ int main( int argc, char* argv[] )
 	{
 		fprintf(stderr, "Looking at adafruit devices...\n");
 		const int num = select_and_open_device( devs_adafruit );
-		fprintf(stderr, "Found %d.\n",num);
+		fprintf(stderr, "Opened %d devices.\n",num);
 		hid_free_enumeration(devs_adafruit);
 	}
 #endif
