@@ -31,10 +31,11 @@
 enum model
 {
 	MODEL_UNKNOWN=0,
-	MODEL_108,
-	MODEL_810,
-	MODEL_810s,
-	MODEL_810c,
+	MODEL_108m,		// 10 bars of 8 segments, mini size (3.5" drive bay.)
+	MODEL_108,		// 10 bars of 8 segments.
+	MODEL_810,		// 10 bars of 8 segments.
+	MODEL_810s,		// 8 bars of 10 segments, single driver.
+	MODEL_810c,		// 8 bars of 10 segments, colour LEDs.
 };
 
 // Howmany Turbo LEDz devices did we find?
@@ -166,6 +167,8 @@ static enum model get_model(const wchar_t* modelname)
 		return MODEL_810s;
 	if ( !wcscmp( modelname, L"810" ) )
 		return MODEL_810;
+	if ( !wcscmp( modelname, L"108m" ) )
+		return MODEL_108m;
 	if ( !wcscmp( modelname, L"108" ) )
 		return MODEL_108;
 	return MODEL_UNKNOWN;
@@ -252,7 +255,7 @@ static int select_and_open_device( struct hid_device_info* devs )
 		{
 			hds[ numdevs ] = handle;
 			mod[ numdevs ] = models[i];
-			seg[ numdevs ] = (models[i] == MODEL_108) ? 8 : 10;
+			seg[ numdevs ] = (models[i] == MODEL_108 || models[i] == MODEL_108m) ? 8 : 10;
 			numdevs++;
 			rv++;
 		}
