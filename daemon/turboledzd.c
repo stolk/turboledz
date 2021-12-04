@@ -285,11 +285,15 @@ static void get_usages(int num, float* usages)
 		memset( curr, 0, sz );
 	}
 
-	FILE* f = fopen( "/proc/stat", "rb" );
-	assert(f);
+	static FILE* f = 0;
+	if ( !f )
+	{
+		f = fopen( "/proc/stat", "rb" );
+		assert(f);
+	}
 	char info[16384];
 	const size_t numr = fread( info, 1, sizeof(info)-1, f );
-	fclose(f);
+	rewind(f);
 
 	assert( numr < sizeof(info) );
 	info[numr] = 0;
