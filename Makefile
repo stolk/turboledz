@@ -9,7 +9,7 @@ CFLAGS=-g -Wall -Wextra # -static
 
 PKG=turboledz-1.0
 
-daemon/turboledzd: daemon/turboledzd.c daemon/cpuinf.c
+daemon/turboledzd: daemon/turboledzd.c daemon/cpuinf.c daemon/cpuinf.h
 	$(CC) $(CFLAGS) daemon/turboledzd.c daemon/cpuinf.c -o daemon/turboledzd -lhidapi-hidraw -ludev
 
 $(PKG).deb: daemon/turboledzd

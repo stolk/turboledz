@@ -75,6 +75,7 @@ static void cleanup(void)
 		hds[i] = 0;
 	}
 	hid_exit();
+	numdevs=0;
 }
 
 
@@ -357,15 +358,48 @@ int service( void )
 			get_usages( 1, usages );
 			for ( int i=0; i<numdevs; ++i )
 			{
-				int bars = (int) ( 0.5f + ( (seg[i]-FLT_EPSILON) * usages[0] ) );
-				uint8_t rep[2] = { 0x00, bars | 0x80 };
 				hid_device* hd = hds[i];
-				const int written = hid_write( hd, rep, sizeof(rep) );
-				if ( written < 0 )
+				if ( mod[i] == MODEL_810c )
 				{
-					fprintf( stderr, "hid_write for %zu bytes failed with: %ls\n", sizeof(rep), hid_error(hd) );
-					cleanup();
-					exit(EX_IOERR);
+					enum freq_stage stages[ CPUINF_MAX ];
+					const int numfr = cpuinf_get_cur_freq_stages( stages, CPUINF_MAX );
+					uint32_t grn=0;
+					uint32_t red=0;
+					uint32_t bit=1;
+					for ( int i=0; i<numfr; ++i )
+					{
+						enum freq_stage s = stages[i];
+						grn |= ( (s==FREQ_STAGE_LOW || s==FREQ_STAGE_MID) ? bit : 0 );
+						red |= ( (s==FREQ_STAGE_MID || s==FREQ_STAGE_MAX) ? bit : 0 );
+						bit = bit<<1;
+					}
+					uint8_t rep[5] =
+					{
+						0x00,
+						((grn>>0) & 0x1f) | 0x80,
+						((grn>>5) & 0x1f),
+						((red>>0) & 0x1f),
+						((red>>5) & 0x1f),
+					};
+					const int written = hid_write( hd, rep, sizeof(rep) );
+					if ( written < 0 )
+					{
+						fprintf( stderr, "hid_write for %zu bytes failed with: %ls\n", sizeof(rep), hid_error(hd) );
+						cleanup();
+						exit(EX_IOERR);
+					}
+				}
+				else
+				{
+					int bars = (int) ( 0.5f + ( (seg[i]-FLT_EPSILON) * usages[0] ) );
+					uint8_t rep[2] = { 0x00, bars | 0x80 };
+					const int written = hid_write( hd, rep, sizeof(rep) );
+					if ( written < 0 )
+					{
+						fprintf( stderr, "hid_write for %zu bytes failed with: %ls\n", sizeof(rep), hid_error(hd) );
+						cleanup();
+						exit(EX_IOERR);
+					}
 				}
 			}
 		}
