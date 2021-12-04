@@ -21,6 +21,9 @@
 
 #include <hidapi/hidapi.h>
 
+#include "cpuinf.h"
+
+
 // So far, all Turbo LEDz devices made are based on Arduino Pro Micro, so we don't need to check for Adafruit SAMD devices.
 // If this changes in the future, we should check for devices other than Arduino Pro Micro too.
 #define TRY_ADAFRUIT_DEVICES	0
@@ -375,7 +378,7 @@ int main( int argc, char* argv[] )
 	strncpy( opt_mode, "cpu", sizeof(opt_mode) );
 	read_config();
 
-	numcpu = (int) sysconf( _SC_NPROCESSORS_ONLN );
+	numcpu = cpuinf_init();
 	if ( numcpu <= 0 ) return 1;
 
 	signal( SIGINT,  sig_handler ); // For graceful exit.
