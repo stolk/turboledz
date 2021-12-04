@@ -270,7 +270,6 @@ static uint32_t* curr=0;	// Per cpu, a set of 7 Jiffies counts.
 
 // Reads for each cpu: how many jiffies were spent in each state:
 //   user, nice, system, idle, iowait, irq, softirq
-// Time spent in idle/iowait means that the cpu was not busy with work.
 static void get_usages(int num, float* usages)
 {
 	// First invokation, we should allocate buffers, sized to the number of CPUs in this system.
@@ -328,12 +327,14 @@ static void get_usages(int num, float* usages)
 		{
 			deltas[i] = cur[i] - prv[i];
 			prv[i] = cur[i];
-			totaldelta += deltas[i];
+			if ( i != 2 )
+				totaldelta += deltas[i];
 		}
-		uint32_t work = deltas[0] + deltas[1] + deltas[5] + deltas[6];
-		uint32_t idle = deltas[3] + deltas[4];
-		(void) idle;
-		usages[ cpu ] = work / (float) totaldelta;
+		const uint32_t user = deltas[0];
+		const uint32_t syst = deltas[2];
+		const uint32_t idle = deltas[3];
+		uint32_t work = user + syst;
+		usages[ cpu ] = work / (float) (user+syst+idle);
 	}
 }
 
