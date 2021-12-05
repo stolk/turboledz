@@ -446,7 +446,7 @@ int main( int argc, char* argv[] )
 
 	if ( devs_arduino )
 	{
-		fprintf(stderr, "Looking at arduino devices...\n");
+		fprintf(stderr, "Examining arduino devices...\n");
 		const int num = select_and_open_device( devs_arduino );
 		fprintf(stderr, "Opened %d devices.\n",num);
 		hid_free_enumeration(devs_arduino);
@@ -455,7 +455,7 @@ int main( int argc, char* argv[] )
 #if TRY_ADAFRUIT_DEVICES
 	if ( devs_adafruit )
 	{
-		fprintf(stderr, "Looking at adafruit devices...\n");
+		fprintf(stderr, "Examining adafruit devices...\n");
 		const int num = select_and_open_device( devs_adafruit );
 		fprintf(stderr, "Opened %d devices.\n",num);
 		hid_free_enumeration(devs_adafruit);

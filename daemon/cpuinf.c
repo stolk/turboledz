@@ -65,7 +65,6 @@ int cpuinf_init(void)
 {
 	// How many cores in this system?
 	const int num_cpus = sysconf( _SC_NPROCESSORS_ONLN );
-	fprintf( stderr, "Found %d cpus.\n", num_cpus );
 	assert( num_cpus <= CPUINF_MAX );
 
 	int maxcoreid=-1;
@@ -79,18 +78,19 @@ int cpuinf_init(void)
 		maxcoreid = maxcoreid < cpuinf_coreid[i] ? cpuinf_coreid[i] : maxcoreid;
 		fprintf
 		(
-			stderr, "cpu %d (core %d) minfreq: %d basefreq: %d maxfreq: %d\n", 
+			stderr, "cpu %2d (core %2d)  minfreq: %4dMHz  basefreq: %4dMHz  maxfreq: %4dMHz\n", 
 			i,
 			cpuinf_coreid[i],
-			cpuinf_freq_min[i],
-			cpuinf_freq_bas[i],
-			cpuinf_freq_max[i]
+			cpuinf_freq_min[i]/1000,
+			cpuinf_freq_bas[i]/1000,
+			cpuinf_freq_max[i]/1000
 		);
 	}
 	cpuinf_num_virtual_cores = num_cpus;
 	cpuinf_num_physical_cores = maxcoreid+1;
 
-	fprintf(stderr, "Number of physical cores: %d\n", cpuinf_num_physical_cores);
+	fprintf( stderr, "Number of virtual cores:  %2d\n", cpuinf_num_virtual_cores );
+	fprintf( stderr, "Number of physical cores: %2d\n", cpuinf_num_physical_cores);
 
 	return num_cpus;
 }
