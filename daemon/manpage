@@ -1,6 +1,6 @@
 .\" Manpage for turboledzd.
 .\" Contact b.stolk@gmail.com to correct errors or typos.
-.TH man 1 "24 Sep 2021" "1.0" "sysblinkd man page"
+.TH man 1 "4 Dec 2021" "1.0" "sysblinkd man page"
 .SH NAME
 turboledzd \- Turbo LEDz daemon
 .SH SYNOPSIS
@@ -32,7 +32,12 @@ To stop the service:
 
 To check the status of the service:
   $systemctl status turboledz
-
+.SH PERMISSIONS
+This daemon was designed to run in userspace.
+To do so, it will need access to /dev/hidrawX devices.
+This is typically achieved with the correct udev rule in /lib/udev/rules.d/ directory.
+The Debian package that gets build from the official turboledz source code will take care of this.
+If you are not using the package install, you need to manually take care of this, or alternatively run as root.
 .SH SEE ALSO
   systemctl
 .SH BUGS
