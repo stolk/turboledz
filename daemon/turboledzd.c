@@ -179,6 +179,20 @@ static enum model get_model(const wchar_t* modelname)
 }
 
 
+static int get_permissions( const char* fname )
+{
+	struct stat statRes;
+	const int r = stat( fname, &statRes );
+	if ( r )
+	{
+		fprintf(stderr,"Error: stat() failed with %s on %s\n", strerror(errno), fname);
+		exit(EX_NOINPUT);
+	}
+	const mode_t bits = statRes.st_mode;
+	return bits;
+}
+
+
 // We are passed a set of HID devices that matched our enumeration.
 // Here, we should examine them, and select one to open.
 static int select_and_open_device( struct hid_device_info* devs )
@@ -227,25 +241,34 @@ static int select_and_open_device( struct hid_device_info* devs )
 	for ( int i=0; i<count; ++i )
 	{
 		// First check if permissions are good on the /dev/rawhidX file.
-		struct stat statRes;
 		const char* fname = filenames[i];
-		const int r = stat( fname, &statRes );
-		if ( r )
+		int attemptnr=0;
+		int valid=0;
+		// We do this multiple times, because I find that sometimes the udev rule is too late during boot.
+		while( !valid )
 		{
-			fprintf(stderr,"Error: stat() failed with %s on %s\n", strerror(errno), fname);
-			exit(EX_NOINPUT);
+			const mode_t bits = get_permissions( fname );
+			if ( ( bits & S_IROTH ) && ( bits & S_IWOTH ) )
+			{
+				valid = 1;
+			}
+			else
+			{
+				if ( attemptnr == 3 )
+				{
+					fprintf
+					(
+						stderr,
+						"Error: No rw-permission for %s which has permission %04o. Retrying...\n",
+						fname, bits
+					);
+					exit(EX_NOPERM);
+				}
+				attemptnr++;
+				sleep(1);
+			}
 		}
-		const mode_t bits = statRes.st_mode;
-		if ((bits & S_IROTH) == 0)	// Non-owner user should be able to read this file.
-		{
-			fprintf(stderr,"Error: No read-permission for %s which has permission %04o\n", fname, bits);
-			exit(EX_NOPERM);
-		}
-		if ((bits & S_IWOTH) == 0)	// Non-owner user should be able to write this file.
-		{
-			fprintf(stderr,"Error: No write-permission for %s which has permission %04o\n", fname, bits);
-			exit(EX_NOPERM);
-		}
+		// We can open it.
 		handle = hid_open_path( filenames[i] );
 		if (!handle)
 		{
