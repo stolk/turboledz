@@ -238,15 +238,14 @@ static int select_and_open_device( struct hid_device_info* devs )
 		const mode_t bits = statRes.st_mode;
 		if ((bits & S_IROTH) == 0)	// Non-owner user should be able to read this file.
 		{
-			fprintf(stderr,"Error: No user read-permission for %s\n", fname);
+			fprintf(stderr,"Error: No read-permission for %s which has permission %04o\n", fname, bits);
 			exit(EX_NOPERM);
 		}
 		if ((bits & S_IWOTH) == 0)	// Non-owner user should be able to write this file.
 		{
-			fprintf(stderr,"Error: No user write-permission for %s\n", fname);
+			fprintf(stderr,"Error: No write-permission for %s which has permission %04o\n", fname, bits);
 			exit(EX_NOPERM);
 		}
-		fprintf(stderr,"Opening '%s' with permissions %04o\n", filenames[i], bits);
 		handle = hid_open_path( filenames[i] );
 		if (!handle)
 		{
