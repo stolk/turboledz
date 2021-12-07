@@ -62,6 +62,9 @@ static int		opt_freq=10;
 // Specified in config file: currently only "cpu" is implemented.
 static char		opt_mode[80];
 
+// Specified in config file: how long do we wait before operations, to give udev daemon time to apply rules.
+static int		opt_launchpause;
+
 // When paused, we don't collect data, nor send it to the device.
 static int		paused=0;
 
@@ -116,6 +119,11 @@ static int read_config(void)
 				if ( !strncmp( s, "mode=", 5 ) )
 				{
 					strncpy( opt_mode, s+5, sizeof(opt_mode) );
+					parsed++;
+				}
+				if ( !strncmp( s, "launchpause=", 12 ) )
+				{
+					opt_launchpause = atoi( s+12 );
 					parsed++;
 				}
 			}
@@ -206,21 +214,18 @@ static int select_and_open_device( struct hid_device_info* devs )
 
 	while (cur_dev)
 	{
-		printf("Device Found\n  type: %04hx %04hx\n  path: %s\n  serial_number: %ls", cur_dev->vendor_id, cur_dev->product_id, cur_dev->path, cur_dev->serial_number);
-		printf("\n");
-		printf("  Manufacturer: %ls\n", cur_dev->manufacturer_string);
-		printf("  Product:      %ls\n", cur_dev->product_string);
-		printf("  Release:      %hx\n", cur_dev->release_number);
-		printf("  Interface:    %d\n",  cur_dev->interface_number);
-		printf("  Usage (page): 0x%hx (0x%hx)\n", cur_dev->usage, cur_dev->usage_page);
-		printf("\n");
-
+		fprintf(stderr,"type: %04hx %04hx\n  path: %s\n  serial_number: %ls\n", cur_dev->vendor_id, cur_dev->product_id, cur_dev->path, cur_dev->serial_number);
+		fprintf(stderr,"  Manufacturer: %ls\n", cur_dev->manufacturer_string);
+		fprintf(stderr,"  Product:      %ls\n", cur_dev->product_string);
+		fprintf(stderr,"  Release:      %hx\n", cur_dev->release_number);
+		fprintf(stderr,"  Interface:    %d\n",  cur_dev->interface_number);
+		fprintf(stderr,"  Usage (page): 0x%hx (0x%hx)\n", cur_dev->usage, cur_dev->usage_page);
 		if ( cur_dev->product_string )
 		{
 			if ( !wcsncmp( cur_dev->product_string, L"Turbo LEDz", 10 ) )
 			{
 				const wchar_t* prodname = cur_dev->product_string+11;
-				printf("Detected model: %ls\n", prodname);
+				fprintf(stderr,"Detected model: %ls\n", prodname);
 				if ( count<16 )
 				{
 					filenames[count] = cur_dev->path;
@@ -231,7 +236,7 @@ static int select_and_open_device( struct hid_device_info* devs )
 		}
 		else
 		{
-			printf("Skipped %ls\n", cur_dev->product_string);
+			fprintf(stderr,"Skipped %ls\n", cur_dev->product_string);
 		}
 		cur_dev = cur_dev->next;
 	}
@@ -436,8 +441,16 @@ int main( int argc, char* argv[] )
 {
 	(void)argc;
 	(void)argv;
+	fprintf(stderr,"Turbo LEDZ daemon. (c) by GSAS Inc.\n");
 	strncpy( opt_mode, "cpu", sizeof(opt_mode) );
 	read_config();
+
+	if ( opt_launchpause > 0 )
+	{
+		fprintf(stderr, "A %dms graceperiod for udevd to do its work starts now.\n", opt_launchpause);
+		usleep( opt_launchpause * 1000 );
+		fprintf(stderr, "Commencing...\n");
+	}
 
 	numcpu = cpuinf_init();
 	if ( numcpu <= 0 ) return 1;

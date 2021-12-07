@@ -1,6 +1,6 @@
 [Unit]
 Description=Turbo LEDz service
-After=systemd-udevd.service
+After=systemd-udevd.service dbus.service
 
 [Service]
 Type=simple
