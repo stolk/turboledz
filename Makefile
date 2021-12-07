@@ -5,7 +5,7 @@
 
 CC=cc
 
-CFLAGS=-g -Wall -Wextra # -static
+CFLAGS=-g -O2 -Wall -Wextra # -static
 
 PKG=turboledz-1.0
 

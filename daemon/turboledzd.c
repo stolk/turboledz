@@ -118,7 +118,7 @@ static int read_config(void)
 				}
 				if ( !strncmp( s, "mode=", 5 ) )
 				{
-					strncpy( opt_mode, s+5, sizeof(opt_mode) );
+					strncpy( opt_mode, s+5, sizeof(opt_mode)-1 );
 					parsed++;
 				}
 				if ( !strncmp( s, "launchpause=", 12 ) )
@@ -236,7 +236,7 @@ static int select_and_open_device( struct hid_device_info* devs )
 		}
 		else
 		{
-			fprintf(stderr,"Skipped %ls\n", cur_dev->product_string);
+			fprintf(stderr,"Skipped %s for lack of product name.\n", cur_dev->path);
 		}
 		cur_dev = cur_dev->next;
 	}
