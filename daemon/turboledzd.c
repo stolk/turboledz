@@ -259,14 +259,15 @@ static int select_and_open_device( struct hid_device_info* devs )
 			}
 			else
 			{
-				if ( attemptnr == 3 )
+				fprintf
+				(
+					stderr,
+					"Error: No rw-permission for %s which has permission %04o. Retrying...\n",
+					fname, bits
+				);
+				if ( attemptnr == 5 )
 				{
-					fprintf
-					(
-						stderr,
-						"Error: No rw-permission for %s which has permission %04o. Retrying...\n",
-						fname, bits
-					);
+					fprintf(stderr,"Giving up. The udev daemon did not fix permissions for us.\n");
 					exit(EX_NOPERM);
 				}
 				attemptnr++;
