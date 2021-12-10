@@ -19,10 +19,11 @@ This sets the mode on what to graph: cpu, gpu, net, etc. Currently, only cpu is 
 .SS freq
 This sets the update frequency in Hz.
   freq=10
+.SS launchpause
 This sets how long we pause upon launch, in milliseconds.
-On some machines, I find that the udev daemon is a little slow with applying all rules, causing the device file permission to be set too late.
+On some machines, I find that the udev daemon is a little slow with applying all rules at boot-time, causing the device file permission to be set too late.
 With a small pause we can work around that, hence this ugly hack of an option.
-launchpause=500
+  launchpause=500
 .SH LAUNCHING
 When a Turbo LEDz device is plugged in, and has not yet been contacted by the daemon, the device will display a scrolling wave.
 Once the daemon talks to the device, this wave is replaced by live CPU statistics.
@@ -45,7 +46,7 @@ If you are not using the package install, you need to manually take care of this
 .SH SEE ALSO
   systemctl
 .SH BUGS
-No known bugs.
+No known bugs. Issues can be reported at the https://github.com/stolk/turboledz repository.
 .SH AUTHOR
 Bram Stolk (b.stolk@gmail.com)
 

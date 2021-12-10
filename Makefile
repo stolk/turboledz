@@ -12,7 +12,7 @@ PKG=turboledz-1.0
 daemon/turboledzd: daemon/turboledzd.c daemon/cpuinf.c daemon/cpuinf.h
 	$(CC) $(CFLAGS) daemon/turboledzd.c daemon/cpuinf.c -o daemon/turboledzd -lhidapi-hidraw -ludev
 
-$(PKG).deb: daemon/turboledzd
+$(PKG).deb: daemon/turboledzd daemon/manpage
 	sudo rm -rf ./$(PKG)
 	mkdir -p $(PKG)/etc
 	cp ./daemon/conf $(PKG)/etc/turboledz.conf
