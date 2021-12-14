@@ -82,8 +82,30 @@ static int		opt_launchpause;
 static int		paused=0;
 
 
+static void pause_all_devices(void)
+{
+	paused = 1;
+	fprintf( stderr, "Preparing to go to sleep...\n" );
+	const uint8_t rep[2] = { 0x00, 0x40 };
+	usleep(40000);
+	for ( int i=0; i<numdevs; ++i )
+	{
+		hid_device* hd = hds[i];
+		const int written = hid_write( hd, rep, sizeof(rep) );
+		if (written<0)
+			fprintf( stderr, "hid_write() failed for %zu bytes with: %ls\n", sizeof(rep), hid_error(hd) );
+	}
+	usleep(40000);
+}
+
+
 static void cleanup(void)
 {
+	if ( !paused )
+	{
+		pause_all_devices();
+	}
+
 	for ( int i=0; i<numdevs; ++i )
 	{
 		hid_device* hd = hds[i];
@@ -163,18 +185,7 @@ static void sig_handler( int signum )
 	if ( signum == SIGUSR1 )
 	{
 		// This signals that the host is about to go to sleep / suspend.
-		paused = 1;
-		fprintf( stderr, "Preparing to go to sleep...\n" );
-		const uint8_t rep[2] = { 0x00, 0x40 };
-		usleep(40000);
-		for ( int i=0; i<numdevs; ++i )
-		{
-			hid_device* hd = hds[i];
-			const int written = hid_write( hd, rep, sizeof(rep) );
-			if (written<0)
-				fprintf( stderr, "hid_write() failed for %zu bytes with: %ls\n", sizeof(rep), hid_error(hd) );
-		}
-		usleep(40000);
+		pause_all_devices();
 	}
 	if ( signum == SIGUSR2 )
 	{
