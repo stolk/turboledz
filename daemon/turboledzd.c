@@ -38,7 +38,20 @@ enum model
 	MODEL_108,		// 10 bars of 8 segments.
 	MODEL_810,		// 10 bars of 8 segments.
 	MODEL_810s,		// 8 bars of 10 segments, single driver.
+	MODEL_88s,		// 8 bars of 8 segments, single dirver.
 	MODEL_810c,		// 8 bars of 10 segments, colour LEDs.
+	MODEL_COUNT
+};
+
+static const char* modelnames[ MODEL_COUNT ] =
+{
+	"unknown",
+	"108m",
+	"108",
+	"810",
+	"810s",
+	"88s",
+	"810c",
 };
 
 // Howmany Turbo LEDz devices did we find?
@@ -159,7 +172,7 @@ static void sig_handler( int signum )
 			hid_device* hd = hds[i];
 			const int written = hid_write( hd, rep, sizeof(rep) );
 			if (written<0)
-				fprintf( stderr,"hid_write() failed for %zu bytes with: %ls\n", sizeof(rep), hid_error(hd) );
+				fprintf( stderr, "hid_write() failed for %zu bytes with: %ls\n", sizeof(rep), hid_error(hd) );
 		}
 		usleep(40000);
 	}
@@ -177,6 +190,8 @@ static enum model get_model(const wchar_t* modelname)
 		return MODEL_810c;
 	if ( !wcscmp( modelname, L"810s" ) )
 		return MODEL_810s;
+	if ( !wcscmp( modelname, L"88s" ) )
+		return MODEL_88s;
 	if ( !wcscmp( modelname, L"810" ) )
 		return MODEL_810;
 	if ( !wcscmp( modelname, L"108m" ) )
@@ -413,7 +428,8 @@ int service( void )
 					const int written = hid_write( hd, rep, sizeof(rep) );
 					if ( written < 0 )
 					{
-						fprintf( stderr, "hid_write for %zu bytes failed with: %ls\n", sizeof(rep), hid_error(hd) );
+						const char* modelnm = modelnames[ mod[i] ];
+						fprintf( stderr, "hid_write to %s for %zu bytes failed with: %ls\n", modelnm, sizeof(rep), hid_error(hd) );
 						cleanup();
 						exit(EX_IOERR);
 					}
