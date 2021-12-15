@@ -55,6 +55,20 @@ This can be automatically set with a udev rule.
 You can run turboledzd straight from the command-line, as user, to test.
 The Debian package will set up a systemd service, and run the process under the daemon user.
 
+## Plugging In
+
+Even though a device can be plugged in with a regular USB to Micro-USB cable, installing the device in a 5.25" drive bay is done best with a 5-pin USB cable.
+Locate the USB connectors on your motherboard, which are typically 9-pin or 5-pin.
+For a 9-pin connector, you can choose either the top-row or bottom-row.
+Depicted below is my motherboard with a 9-pin double port and a 4/5-pin single port.
+You can use one of three to connect the device: either the red, orange or yellow annotated row.
+Check your motherboard manual for orientation: The shielded cable goes to the unconnected pin-position.
+
+![usbports](images/usbports.jpeg "usbports")
+
+![usbconnector](images/usbconnector.jpeg "usbconnector")
+
+
 ## Known issues
 
 ## Copyright
