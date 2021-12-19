@@ -324,82 +324,7 @@ static int select_and_open_device( struct hid_device_info* devs )
 }
 
 
-static uint32_t* prev=0;	// Per cpu, a set of 7 Jiffies counts.
-static uint32_t* curr=0;	// Per cpu, a set of 7 Jiffies counts.
-
-// Reads for each cpu: how many jiffies were spent in each state:
-//   user, nice, system, idle, iowait, irq, softirq
-static void get_usages(int num, float* usages)
-{
-	// First invokation, we should allocate buffers, sized to the number of CPUs in this system.
-	if ( !prev || !curr )
-	{
-		const size_t sz = sizeof(uint32_t) * 7 * num;
-		prev = (uint32_t*) malloc(sz);
-		curr = (uint32_t*) malloc(sz);
-		memset( prev, 0, sz );
-		memset( curr, 0, sz );
-	}
-
-	static FILE* f = 0;
-	if ( !f )
-	{
-		f = fopen( "/proc/stat", "rb" );
-		assert(f);
-	}
-	char info[16384];
-	const size_t numr = fread( info, 1, sizeof(info)-1, f );
-	rewind(f);
-
-	assert( numr < sizeof(info) );
-	info[numr] = 0;
-
-	for ( int cpu=0; cpu<num; ++cpu )
-	{
-		char tag[16];
-		strncpy( tag,"cpu ", sizeof(tag) );
-
-		uint32_t* prv = prev + cpu * 7;
-		uint32_t* cur = curr + cpu * 7;
-
-		// If num is larger than 1, we should ready per-cpu stats, instead of the aggragate stat.
-		if ( num > 1 )
-			snprintf( tag, sizeof(tag), "cpu%d", cpu );
-
-		const char* s = strstr( info, tag );
-		assert( s );
-
-		if ( num > 1 )
-		{
-			// Read cpu specific stats.
-			int cpunr;
-			const int numscanned = sscanf( s, "cpu%d %u %u %u %u %u %u %u", &cpunr, cur+0, cur+1, cur+2, cur+3, cur+4, cur+5, cur+6 );
-			assert( numscanned == 8 );
-			assert( cpunr == cpu );
-		}
-		else
-		{
-			// Only read the aggregate stat, we don't need the break-out per cpu.
-			const int numscanned = sscanf( s, "cpu %u %u %u %u %u %u %u", cur+0, cur+1, cur+2, cur+3, cur+4, cur+5, cur+6 );
-			assert( numscanned == 7 );
-		}
-
-		uint32_t deltas[7];
-		for ( int i=0; i<7; ++i )
-		{
-			deltas[i] = cur[i] - prv[i];
-			prv[i] = cur[i];
-		}
-		const uint32_t user = deltas[0];
-		const uint32_t syst = deltas[2];
-		const uint32_t idle = deltas[3];
-		uint32_t work = user + syst;
-		usages[ cpu ] = work / (float) (user+syst+idle);
-	}
-}
-
-
-int service( void )
+static int service( void )
 {
 	const int delay = 1000000 / opt_freq;	// uSeconds to wait between writes.
 	while ( 1 )
@@ -407,7 +332,7 @@ int service( void )
 		if ( !paused )
 		{
 			float usages[ numcpu ];
-			get_usages( 1, usages );
+			cpuinf_get_usages( 1, usages );
 			for ( int i=0; i<numdevs; ++i )
 			{
 				hid_device* hd = hds[i];
