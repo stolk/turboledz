@@ -71,6 +71,8 @@ Check your motherboard manual for orientation: The shielded cable goes to the un
 
 ## Known issues
 
+**No hot-plug support:** The daemon will exit if no devices are found, and it will only use devices that where seen at launch. Currently it does not detect hot-plugged devices that were plugged in after the start of the daemon process.
+
 ## Copyright
 
 turboledzd is (c)2021 by Bram Stolk and licensed under the GPL.
