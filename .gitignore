@@ -55,3 +55,7 @@ dkms.conf
 daemon/turboledzd
 turboledz-*
 
+# Windows specific cruft
+windows/.vs
+windows/turboledzservice.vcxproj.user
+
