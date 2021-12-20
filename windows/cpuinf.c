@@ -1,7 +1,13 @@
 #include <assert.h>	// for assert()
 #include <stdio.h>	// for fopen()
 #include <stdlib.h>	// for atoi()
-//#include <unistd.h>	// for sysconf()
+#include <inttypes.h>	// for uint64_t;
+
+#if defined(_WIN32)
+#	include <Windows.h>
+#else
+#	include <unistd.h>	// for sysconf()
+#endif
 
 #include "cpuinf.h"
 
@@ -100,6 +106,30 @@ int cpuinf_get_cur_freq_stages( enum freq_stage* stages, int sz )
 //   user, nice, system, idle, iowait, irq, softirq
 void cpuinf_get_usages( int num, float* usages )
 {
-	usages[0] = 1.0f;
+	static uint64_t t_prev[3];
+	static uint64_t t_curr[3];
+	static int first = 1;
+
+	int res = GetSystemTimes((FILETIME*)t_curr + 0, (FILETIME*)t_curr + 1, (FILETIME*)t_curr + 2);
+	assert(res);
+	if (first)
+	{
+		memcpy(t_prev, t_curr, sizeof(t_prev));
+		usages[0] = 0.0f;
+		first = 0;
+		return;
+	}
+	uint64_t deltas[3] =
+	{
+		t_curr[0] - t_prev[0],
+		t_curr[1] - t_prev[1],
+		t_curr[2] - t_prev[2],
+	};
+	uint64_t t_kern = deltas[1] - deltas[0];
+	uint64_t t_user = deltas[2];
+	uint64_t t_tota = deltas[1] + deltas[2];
+
+	usages[0] = (t_kern + t_user) / (float) (t_tota);
+	memcpy(t_prev, t_curr, sizeof(t_prev));
 }
 

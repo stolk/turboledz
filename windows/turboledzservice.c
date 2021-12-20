@@ -330,8 +330,10 @@ static int select_and_open_device( struct hid_device_info* devs )
 			exit(EX_IOERR);
 		}
 		fprintf(stderr,"Opened hid device at %s\n", fname);
+#if !defined(_WIN32)
 		// We like to be blocked.
 		hid_set_nonblocking(handle, 0);
+#endif
 		if ( numdevs < MAXDEVS )
 		{
 			hds[ numdevs ] = handle;
@@ -392,8 +394,10 @@ int service( void )
 				else
 				{
 					int bars = (int) ( 0.5f + ( (seg[i]-FLT_EPSILON) * usages[0] ) );
-					uint8_t rep[2] = { 0x00, bars | 0x80 };
-					const int written = hid_write( hd, rep, sizeof(rep) );
+					//bars = rand() % 9;
+					uint8_t rep[9] = { 0x00, bars | 0x80,0,0,0,0,0,0, 0 };
+
+					const int written = hid_write( hd, rep, 2 /*sizeof(rep)*/);
 					if ( written < 0 )
 					{
 						fprintf( stderr, "hid_write for %zu bytes failed with: %ls\n", sizeof(rep), hid_error(hd) );
@@ -407,6 +411,7 @@ int service( void )
 	}
 	return 0;
 }
+
 
 
 int main( int argc, char* argv[] )
