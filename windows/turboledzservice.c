@@ -100,7 +100,7 @@ static void pause_all_devices(void)
 {
 	paused = 1;
 	fprintf( stderr, "Preparing to go to sleep...\n" );
-	const uint8_t rep[2] = { 0x00, 0x40 };
+	const uint8_t rep[9] = { 0x00, 0x40, 0,0, 0,0,0,0, 0 };
 	Sleep(40);
 	for ( int i=0; i<numdevs; ++i )
 	{
@@ -374,13 +374,14 @@ int service( void )
 						red |= ( (s==FREQ_STAGE_MID || s==FREQ_STAGE_MAX) ? bit : 0 );
 						bit = bit<<1;
 					}
-					uint8_t rep[5] =
+					uint8_t rep[9] =
 					{
 						0x00,
 						((grn>>0) & 0x1f) | 0x80,
 						((grn>>5) & 0x1f),
 						((red>>0) & 0x1f),
 						((red>>5) & 0x1f),
+						0,0,0,0,
 					};
 					const int written = hid_write( hd, rep, sizeof(rep) );
 					if ( written < 0 )
