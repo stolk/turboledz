@@ -10,11 +10,15 @@
 #include <assert.h>
 #include <wchar.h>		// hidapi uses wide characters.
 #include <inttypes.h>
-#include <unistd.h>
+#if defined(_WIN32)
+#	include <Windows.h>
+#else
+#	include <unistd.h>
+#	include <sysexits.h>
+#endif
 #include <string.h>
 #include <float.h>
 #include <errno.h>
-#include <sysexits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -22,6 +26,10 @@
 
 #include "cpuinf.h"
 
+#if defined(_WIN32)
+#	define EX_IOERR	EXIT_FAILURE
+#	define EX_NOINPUT EXIT_FAILURE
+#endif
 
 // So far, all Turbo LEDz devices made are based on Arduino Pro Micro, so we don't need to check for Adafruit SAMD devices.
 // If this changes in the future, we should check for devices other than Arduino Pro Micro too.
@@ -86,7 +94,11 @@ void turboledz_pause_all_devices(void)
 	turboledz_paused = 1;
 	fprintf( stderr, "Preparing to go to sleep...\n" );
 	const uint8_t rep[2] = { 0x00, 0x40 };
+#if defined(_WIN32)
+	Sleep(40);
+#else
 	usleep(40000);
+#endif
 	for ( int i=0; i<numdevs; ++i )
 	{
 		hid_device* hd = hds[i];
@@ -94,7 +106,11 @@ void turboledz_pause_all_devices(void)
 		if (written<0)
 			fprintf( stderr, "hid_write() failed for %zu bytes with: %ls\n", sizeof(rep), hid_error(hd) );
 	}
+#if defined(_WIN32)
+	Sleep(40);
+#else
 	usleep(40000);
+#endif
 }
 
 
@@ -134,7 +150,7 @@ static enum model get_model(const wchar_t* modelname)
 }
 
 
-#if !defined(WIN32)
+#if !defined(_WIN32)
 static int get_permissions( const char* fname )
 {
 	struct stat statRes;
@@ -196,7 +212,7 @@ int turboledz_select_and_open_device( struct hid_device_info* devs )
 	{
 		// First check if permissions are good on the /dev/rawhidX file.
 		const char* fname = filenames[i];
-#if !defined(WIN32)
+#if !defined(_WIN32)
 		int attemptnr=0;
 		int valid=0;
 		// We do this multiple times, because I find that sometimes the udev rule is too late during boot.
@@ -307,7 +323,11 @@ int turboledz_service( void )
 				}
 			}
 		}
+#if defined(_WIN32)
+		Sleep(delay / 1000);
+#else
 		usleep( delay );
+#endif
 	}
 	return 0;
 }
