@@ -34,6 +34,10 @@ $(PKG).deb: daemon/turboledzd daemon/manpage
 
 package: $(PKG).deb
 
+descriptorreport:
+	usbhid-dump -m 2341:8037 | grep -v : | xxd -r -p | hidrd-convert -o spec
+
+
 clean:
 	rm -f $(PKG).deb
 	rm -f daemon/turboledzd
