@@ -21,9 +21,15 @@
     <ClCompile Include="cpuinf.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\daemon\turboledz.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cpuinf.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\daemon\turboledz.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

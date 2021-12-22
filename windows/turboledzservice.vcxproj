@@ -78,7 +78,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\bram\Desktop\src\hidapi;$(IncludePath)</IncludePath>
+    <IncludePath>..\daemon;C:\Users\bram\Desktop\src\hidapi;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Users\bram\Desktop\src\hidapi\windows\x64\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -144,10 +144,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\daemon\turboledz.c" />
     <ClCompile Include="cpuinf.c" />
     <ClCompile Include="turboledzservice.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\daemon\turboledz.h" />
     <ClInclude Include="cpuinf.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
