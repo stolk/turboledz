@@ -5,16 +5,40 @@ VisualStudioVersion = 16.0.32002.261
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "turboledzservice", "turboledzservice.vcxproj", "{790DB44B-FA14-49C8-B2D3-4FD79FEEA0ED}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "turboledzservice", "turboledzsetup\turboledzsetup.vdproj", "{E97F690B-79AE-47BF-A9D9-8C31DF548BD6}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "turboledzinstall", "turboledzinstall\turboledzinstall.vcxproj", "{038124A1-E2F6-4335-B013-C3F25DE30FAD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{790DB44B-FA14-49C8-B2D3-4FD79FEEA0ED}.Debug|x64.ActiveCfg = Debug|x64
 		{790DB44B-FA14-49C8-B2D3-4FD79FEEA0ED}.Debug|x64.Build.0 = Debug|x64
+		{790DB44B-FA14-49C8-B2D3-4FD79FEEA0ED}.Debug|x86.ActiveCfg = Debug|Win32
+		{790DB44B-FA14-49C8-B2D3-4FD79FEEA0ED}.Debug|x86.Build.0 = Debug|Win32
 		{790DB44B-FA14-49C8-B2D3-4FD79FEEA0ED}.Release|x64.ActiveCfg = Release|x64
 		{790DB44B-FA14-49C8-B2D3-4FD79FEEA0ED}.Release|x64.Build.0 = Release|x64
+		{790DB44B-FA14-49C8-B2D3-4FD79FEEA0ED}.Release|x86.ActiveCfg = Release|Win32
+		{790DB44B-FA14-49C8-B2D3-4FD79FEEA0ED}.Release|x86.Build.0 = Release|Win32
+		{E97F690B-79AE-47BF-A9D9-8C31DF548BD6}.Debug|x64.ActiveCfg = Debug
+		{E97F690B-79AE-47BF-A9D9-8C31DF548BD6}.Debug|x86.ActiveCfg = Debug
+		{E97F690B-79AE-47BF-A9D9-8C31DF548BD6}.Debug|x86.Build.0 = Debug
+		{E97F690B-79AE-47BF-A9D9-8C31DF548BD6}.Release|x64.ActiveCfg = Release
+		{E97F690B-79AE-47BF-A9D9-8C31DF548BD6}.Release|x86.ActiveCfg = Release
+		{E97F690B-79AE-47BF-A9D9-8C31DF548BD6}.Release|x86.Build.0 = Release
+		{038124A1-E2F6-4335-B013-C3F25DE30FAD}.Debug|x64.ActiveCfg = Debug|x64
+		{038124A1-E2F6-4335-B013-C3F25DE30FAD}.Debug|x64.Build.0 = Debug|x64
+		{038124A1-E2F6-4335-B013-C3F25DE30FAD}.Debug|x86.ActiveCfg = Debug|Win32
+		{038124A1-E2F6-4335-B013-C3F25DE30FAD}.Debug|x86.Build.0 = Debug|Win32
+		{038124A1-E2F6-4335-B013-C3F25DE30FAD}.Release|x64.ActiveCfg = Release|x64
+		{038124A1-E2F6-4335-B013-C3F25DE30FAD}.Release|x64.Build.0 = Release|x64
+		{038124A1-E2F6-4335-B013-C3F25DE30FAD}.Release|x86.ActiveCfg = Release|Win32
+		{038124A1-E2F6-4335-B013-C3F25DE30FAD}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
