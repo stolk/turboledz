@@ -2,14 +2,14 @@
 #include <stdio.h>
 #include <assert.h>
 
-static FILE* logf;
+static FILE* logfile;
 
 #define LOGI(...) \
 { \
 printf(__VA_ARGS__); \
 printf("\n"); \
 fflush(stdout); \
-if (logf) { fprintf(logf, __VA_ARGS__); fprintf(logf, "\n"); fflush(logf); } \
+if (logfile) { fprintf(logfile, __VA_ARGS__); fprintf(logfile, "\n"); fflush(logfile); } \
 }
 
 
@@ -49,7 +49,7 @@ const char* statenames[] =
 
 int main( int argc, char* argv[] )
 {
-	logf = fopen("c:/temp/turboledzinstall.log", "wb");
+	logfile = fopen("c:/temp/turboledzinstall.log", "wb");
 
 	const int doremove = (argc > 1 && !strcmp(argv[1], "/Uninstall")) ? 1 : 0;
 	const int elevated = is_elevated();
