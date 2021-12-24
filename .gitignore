@@ -58,4 +58,5 @@ turboledz-*
 # Windows specific cruft
 windows/.vs
 windows/turboledzservice.vcxproj.user
+*.vcproj.user
 

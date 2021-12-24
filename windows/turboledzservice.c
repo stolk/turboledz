@@ -40,6 +40,16 @@ static SERVICE_STATUS_HANDLE	sshandle = NULL;
 
 static HANDLE					stopev = INVALID_HANDLE_VALUE;
 
+static FILE*					logf = 0;
+
+#define LOGI(...) \
+{ \
+printf(__VA_ARGS__); \
+printf("\n"); \
+fflush(stdout); \
+if (logf) { fprintf(logf, __VA_ARGS__); fprintf(logf, "\n"); fflush(logf); } \
+}
+
 
 static void sig_handler( int signum )
 {
@@ -80,7 +90,49 @@ DWORD WINAPI ServiceCtrlHandler
 	LPVOID lpContext
 )
 {
-	fprintf(stderr, "Control Handler\n");
+	switch (CtrlCode)
+	{
+	case SERVICE_CONTROL_PAUSE:
+		LOGI("SERVICE_CONTROL_PAUSE");
+		break;
+	case SERVICE_CONTROL_CONTINUE:
+		LOGI("SERVICE_CONTROL_CONTINUE");
+		break;
+	case SERVICE_CONTROL_SHUTDOWN:
+		LOGI("SERVICE_CONTROL_SHUTDOWN");
+		break;
+	case SERVICE_CONTROL_POWEREVENT:
+		LOGI("SERVICE_CONTROL_POWEREVENT");
+		if (dwEventType == PBT_POWERSETTINGCHANGE)
+		{
+			//POWERBROADCAST_SETTING* setting = (POWERBROADCAST_SETTING*)lpEventData;
+		}
+		break;
+	case SERVICE_CONTROL_STOP:
+		LOGI("SERVICE_CONTROL_STOP");
+
+		if (servstat.dwCurrentState != SERVICE_RUNNING)
+			break;
+		/*
+		 * Perform tasks necessary to stop the service here
+		 */
+
+		servstat.dwControlsAccepted = 0;
+		servstat.dwCurrentState = SERVICE_STOP_PENDING;
+		servstat.dwWin32ExitCode = 0;
+		servstat.dwCheckPoint = 4;
+
+		if (SetServiceStatus(sshandle, &servstat) == FALSE)
+			LOGI("SetServiceStatus() failed for SERVICE_STOP_PENDING.");
+
+		// This will signal the worker thread to start shutting down
+		SetEvent(stopev);
+
+		break;
+
+	default:
+		break;
+	}
 	return 0;
 }
 
@@ -96,12 +148,12 @@ VOID WINAPI ServiceMain(DWORD argc, LPTSTR* argv)
 	if (sshandle == NULL)
 	{
 		const DWORD err = GetLastError();
-		fprintf(stderr, "RegisterServiceCtrlHandlerExA() failed with error 0x%lx\n", err);
+		LOGI("RegisterServiceCtrlHandlerExA() failed with error 0x%lx", err);
 		return;
 	}
 	else
 	{
-		fprintf(stderr, "Service Control Handler for TurboLEDz has been registered.\n");
+		LOGI("Service Control Handler for TurboLEDz has been registered.");
 	}
 
 	// Tell the service controller we are starting
@@ -115,7 +167,7 @@ VOID WINAPI ServiceMain(DWORD argc, LPTSTR* argv)
 
 	if (SetServiceStatus(sshandle, &servstat) == FALSE)
 	{
-		fprintf(stderr, "SetServiceStatus() failed\n");
+		LOGI("SetServiceStatus() failed when setting SERVICE_START_PENDING.");
 		return;
 	}
 
@@ -123,12 +175,11 @@ VOID WINAPI ServiceMain(DWORD argc, LPTSTR* argv)
 	 * Perform tasks neccesary to start the service here
 	 */
 
-
 	// Create stop event to wait on later.
 	stopev = CreateEvent(NULL, TRUE, FALSE, NULL);
 	if (stopev == NULL)
 	{
-		fprintf(stderr, "CreateEvent() returned error %lx\n", GetLastError());
+		LOGI("CreateEvent() returned error %lx", GetLastError());
 
 		servstat.dwControlsAccepted = 0;
 		servstat.dwCurrentState = SERVICE_STOPPED;
@@ -137,7 +188,7 @@ VOID WINAPI ServiceMain(DWORD argc, LPTSTR* argv)
 
 		if (SetServiceStatus(sshandle, &servstat) == FALSE)
 		{
-			fprintf(stderr, "SetServiceStatus() failed\n");
+			LOGI("SetServiceStatus() failed when setting SERVICE_STOPPED.");
 		}
 		return;
 	}
@@ -150,7 +201,7 @@ VOID WINAPI ServiceMain(DWORD argc, LPTSTR* argv)
 
 	if (SetServiceStatus(sshandle, &servstat) == FALSE)
 	{
-		fprintf(stderr, "SetServiceStatus() failed\n");
+		LOGI("SetServiceStatus() failed when setting SERVICE_RUNNING.");
 		return;
 	}
 
@@ -163,7 +214,7 @@ VOID WINAPI ServiceMain(DWORD argc, LPTSTR* argv)
 	OutputDebugString(_T("My Sample Service: ServiceMain: Worker Thread Stop Event signaled"));
 #endif
 
-	Sleep(5000);
+	Sleep(50000);
 
 	/*
 	 * Perform any cleanup tasks
@@ -178,10 +229,30 @@ VOID WINAPI ServiceMain(DWORD argc, LPTSTR* argv)
 
 	if (SetServiceStatus(sshandle, &servstat) == FALSE)
 	{
-		fprintf(stderr, "SetServiceStatus() failed\n");
+		LOGI("SetServiceStatus() failed when setting SERVICE_STOPPED.");
 	}
 
 	return;
+}
+
+static int is_elevated()
+{
+	int elevated = 0;
+	HANDLE hToken = NULL;
+	if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken))
+	{
+		TOKEN_ELEVATION Elevation;
+		DWORD cbSize = sizeof(TOKEN_ELEVATION);
+		if (GetTokenInformation(hToken, TokenElevation, &Elevation, sizeof(Elevation), &cbSize))
+			elevated = Elevation.TokenIsElevated;
+	}
+	else
+	{
+		LOGI("OpenProcessToken() failed.");
+	}
+	if (hToken)
+		CloseHandle(hToken);
+	return elevated;
 }
 
 
@@ -189,9 +260,32 @@ int main( int argc, char* argv[] )
 {
 	(void)argc;
 	(void)argv;
-	fprintf(stderr,"Turbo LEDZ daemon. (c) by GSAS Inc.\n");
+
+	char dirname[1024];
+	memset(dirname, 0, sizeof(dirname));
+#if 0
+	const char* s = strstr(argv[0], "turboledzservice.exe");
+	assert(s);
+	const size_t len = s - argv[0];
+	assert(len > 0 && len < 1024);
+	strncpy(dirname, argv[0], len);
+#else
+	strncpy(dirname, "c:\\temp\\", sizeof(dirname));
+#endif
+	fprintf(stderr, "dir = %s\n", dirname);
+	char logname[1024];
+	snprintf(logname, sizeof(logname), "%s%s", dirname, "turboledzservice.log");
+	logf = fopen(logname, "wb");
+
+	LOGI("Turbo LEDZ daemon. (c) by GSAS Inc.");
 	strncpy( opt_mode, "cpu", sizeof(opt_mode) );
 	//turboledz_read_config();
+
+	const int elevated = is_elevated();
+	if (!elevated)
+	{
+		LOGI("Not running with elevated priviledge.");
+	}
 
 	if ( opt_launchpause > 0 )
 	{
@@ -215,8 +309,10 @@ int main( int argc, char* argv[] )
 	if (!startres)
 	{
 		const DWORD err = GetLastError();
-		fprintf(stderr, "StartServiceCtrlDispatcher() failed with: 0x%lx\n", err);
-		exit(1);
+		if (err == ERROR_FAILED_SERVICE_CONTROLLER_CONNECT)
+			LOGI("The program is being run as a console application rather than as a service.");
+		LOGI("StartServiceCtrlDispatcher() failed with: 0x%lx", err);
+		return 1;
 	}
 
 	int initres = turboledz_init();
