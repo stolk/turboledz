@@ -21,6 +21,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_6103DFB51B084765915FE1231E5418B0"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_763AFD49E9DC46C48CED24131B6C8617"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -82,6 +88,14 @@
             "PrerequisitesLocation" = "2:1"
             "Url" = "8:"
             "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.7.2"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4.7.2 (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.7.2"
+                    }
+                }
             }
         }
     }
@@ -132,6 +146,26 @@
         }
         "File"
         {
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_6103DFB51B084765915FE1231E5418B0"
+            {
+            "SourcePath" = "8:..\\x64\\Release\\hidapi.dll"
+            "TargetName" = "8:hidapi.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_A9B6AB31DBD54516B641EFB62A63FB25"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
         }
         "FileType"
         {
@@ -189,7 +223,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:turboledzservice"
         "ProductCode" = "8:{4D49FC76-67BB-4D27-8DBC-171EDF26E801}"
-        "PackageCode" = "8:{F8C09E36-256C-412F-85AF-6E1FEC4B6861}"
+        "PackageCode" = "8:{D81489E7-7434-46EC-B29C-9313B09F4538}"
         "UpgradeCode" = "8:{9F289838-39E5-4591-A7DE-202865ED9D09}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
@@ -738,7 +772,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_2BF02208D1FE477D8A59EBD765D0C59E"
             {
-            "SourcePath" = "8:..\\x64\\Debug\\turboledzinstall.exe"
+            "SourcePath" = "8:..\\x64\\Release\\turboledzinstall.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_A9B6AB31DBD54516B641EFB62A63FB25"
@@ -766,7 +800,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_763AFD49E9DC46C48CED24131B6C8617"
             {
-            "SourcePath" = "8:..\\x64\\Debug\\turboledzservice.exe"
+            "SourcePath" = "8:..\\x64\\Release\\turboledzservice.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_A9B6AB31DBD54516B641EFB62A63FB25"

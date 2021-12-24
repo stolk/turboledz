@@ -94,12 +94,21 @@ DWORD WINAPI ServiceCtrlHandler
 	{
 	case SERVICE_CONTROL_PAUSE:
 		LOGI("SERVICE_CONTROL_PAUSE");
+		turboledz_pause_all_devices();
+		servstat.dwCurrentState = SERVICE_PAUSED;
+		if (SetServiceStatus(sshandle, &servstat) == FALSE)
+			LOGI("SetServiceStatus() failed for SERVICE_PAUSED.");
 		break;
 	case SERVICE_CONTROL_CONTINUE:
 		LOGI("SERVICE_CONTROL_CONTINUE");
+		turboledz_paused = 0;
+		servstat.dwCurrentState = SERVICE_RUNNING;
+		if (SetServiceStatus(sshandle, &servstat) == FALSE)
+			LOGI("SetServiceStatus() failed for SERVICE_RUNNING.");
 		break;
 	case SERVICE_CONTROL_SHUTDOWN:
 		LOGI("SERVICE_CONTROL_SHUTDOWN");
+		turboledz_pause_all_devices();
 		break;
 	case SERVICE_CONTROL_POWEREVENT:
 		LOGI("SERVICE_CONTROL_POWEREVENT");
@@ -111,12 +120,6 @@ DWORD WINAPI ServiceCtrlHandler
 	case SERVICE_CONTROL_STOP:
 		LOGI("SERVICE_CONTROL_STOP");
 
-		if (servstat.dwCurrentState != SERVICE_RUNNING)
-			break;
-		/*
-		 * Perform tasks necessary to stop the service here
-		 */
-
 		servstat.dwControlsAccepted = 0;
 		servstat.dwCurrentState = SERVICE_STOP_PENDING;
 		servstat.dwWin32ExitCode = 0;
@@ -125,8 +128,8 @@ DWORD WINAPI ServiceCtrlHandler
 		if (SetServiceStatus(sshandle, &servstat) == FALSE)
 			LOGI("SetServiceStatus() failed for SERVICE_STOP_PENDING.");
 
-		// This will signal the worker thread to start shutting down
-		SetEvent(stopev);
+		// This will make the turboledz_service() function return.
+		turboledz_finished = 1;
 
 		break;
 
@@ -157,7 +160,7 @@ VOID WINAPI ServiceMain(DWORD argc, LPTSTR* argv)
 	}
 
 	// Tell the service controller we are starting
-	ZeroMemory(&servstat, sizeof(servstat));
+	memset(&servstat, 0, sizeof(servstat));
 	servstat.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
 	servstat.dwControlsAccepted = 0;
 	servstat.dwCurrentState = SERVICE_START_PENDING;
@@ -174,27 +177,15 @@ VOID WINAPI ServiceMain(DWORD argc, LPTSTR* argv)
 	/*
 	 * Perform tasks neccesary to start the service here
 	 */
-
-	// Create stop event to wait on later.
-	stopev = CreateEvent(NULL, TRUE, FALSE, NULL);
-	if (stopev == NULL)
+	int initres = turboledz_init();
+	if (initres)
 	{
-		LOGI("CreateEvent() returned error %lx", GetLastError());
-
-		servstat.dwControlsAccepted = 0;
-		servstat.dwCurrentState = SERVICE_STOPPED;
-		servstat.dwWin32ExitCode = GetLastError();
-		servstat.dwCheckPoint = 1;
-
-		if (SetServiceStatus(sshandle, &servstat) == FALSE)
-		{
-			LOGI("SetServiceStatus() failed when setting SERVICE_STOPPED.");
-		}
+		LOGI("turboledz_init() failed, and returned %d", initres);
 		return;
 	}
 
 	// Tell the service controller we are started
-	servstat.dwControlsAccepted = SERVICE_ACCEPT_STOP;
+	servstat.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_PAUSE_CONTINUE | SERVICE_ACCEPT_SHUTDOWN;
 	servstat.dwCurrentState = SERVICE_RUNNING;
 	servstat.dwWin32ExitCode = 0;
 	servstat.dwCheckPoint = 0;
@@ -205,35 +196,24 @@ VOID WINAPI ServiceMain(DWORD argc, LPTSTR* argv)
 		return;
 	}
 
-#if 0
-	// Start the thread that will perform the main task of the service
-	HANDLE hThread = CreateThread(NULL, 0, ServiceWorkerThread, NULL, 0, NULL);
-	OutputDebugString(_T("My Sample Service: ServiceMain: Waiting for Worker Thread to complete"));
-	// Wait until our worker thread exits effectively signaling that the service needs to stop
-	WaitForSingleObject(hThread, INFINITE);
-	OutputDebugString(_T("My Sample Service: ServiceMain: Worker Thread Stop Event signaled"));
-#endif
+	const int serviceres = turboledz_service(); // This will return once the controller sets turboledz_finished to non-zero.
+	LOGI("turboledz_service() returned %d", serviceres);
 
-	Sleep(50000);
+	// The servicing is done. We should clean up.
+	turboledz_cleanup();
 
-	/*
-	 * Perform any cleanup tasks
-	 */
-
-	CloseHandle(stopev);
-
+	// Tell SCM about our STOPPED status.
 	servstat.dwControlsAccepted = 0;
 	servstat.dwCurrentState = SERVICE_STOPPED;
 	servstat.dwWin32ExitCode = 0;
 	servstat.dwCheckPoint = 3;
 
 	if (SetServiceStatus(sshandle, &servstat) == FALSE)
-	{
 		LOGI("SetServiceStatus() failed when setting SERVICE_STOPPED.");
-	}
 
 	return;
 }
+
 
 static int is_elevated()
 {
@@ -315,12 +295,6 @@ int main( int argc, char* argv[] )
 		return 1;
 	}
 
-	int initres = turboledz_init();
-	if (initres)
-		return initres;
-
-	int rv = turboledz_service();
-	turboledz_cleanup();
-	return rv;
+	return 0;
 }
 
