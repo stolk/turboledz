@@ -15,6 +15,9 @@ extern int		opt_launchpause;
 // When paused, we don't collect data, nor send it to the device.
 extern int		turboledz_paused;
 
+// Set this to stop service.
+extern int		turboledz_finished;
+
 // The number of virtual cores in this system.
 extern int 		turboledz_numcpu;
 

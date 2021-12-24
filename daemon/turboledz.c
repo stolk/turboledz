@@ -88,17 +88,22 @@ int			opt_launchpause;
 // When paused, we don't collect data, nor send it to the device.
 int			turboledz_paused=0;
 
+// Set this to stop service.
+int			turboledz_finished=0;
+
 
 void turboledz_pause_all_devices(void)
 {
 	turboledz_paused = 1;
 	fprintf( stderr, "Preparing to go to sleep...\n" );
-	const uint8_t rep[2] = { 0x00, 0x40 };
 #if defined(_WIN32)
+	const uint8_t rep[8] = { 0x00, 0x40, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00, };
 	Sleep(40);
 #else
+	const uint8_t rep[2] = { 0x00, 0x40 };
 	usleep(40000);
 #endif
+
 	for ( int i=0; i<numdevs; ++i )
 	{
 		hid_device* hd = hds[i];
@@ -268,7 +273,7 @@ int turboledz_select_and_open_device( struct hid_device_info* devs )
 int turboledz_service( void )
 {
 	const int delay = 1000000 / opt_freq;	// uSeconds to wait between writes.
-	while ( 1 )
+	while ( !turboledz_finished )
 	{
 		if ( !turboledz_paused )
 		{
@@ -335,6 +340,7 @@ int turboledz_service( void )
 
 int turboledz_init(void)
 {
+	turboledz_finished = 0;
 	turboledz_numcpu = cpuinf_init();
 	if ( turboledz_numcpu <= 0 ) return 1;
 
