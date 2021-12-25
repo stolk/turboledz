@@ -43,8 +43,8 @@ $ make
 
 To build and install a debian package, use:
 ```
-$ make turboledz-1.0.deb
-$ sudo dpkg -i turboledz-1.0.deb
+$ make turboledz-1.1.deb
+$ sudo dpkg -i turboledz-1.1.deb
 ```
 
 ## Running (Linux)
