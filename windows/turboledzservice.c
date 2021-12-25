@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 
 #include <windows.h>
+#include <powrprof.h>	// For DEVICE_NOTIFY_SUBSCRIBE_PARAMETERS
 
 #include "cpuinf.h"
 #include "turboledz.h"
@@ -37,8 +38,6 @@
 static SERVICE_STATUS			servstat = { 0 };
 
 static SERVICE_STATUS_HANDLE	sshandle = NULL;
-
-static HANDLE					stopev = INVALID_HANDLE_VALUE;
 
 static FILE*					logf = 0;
 
@@ -112,6 +111,7 @@ DWORD WINAPI ServiceCtrlHandler
 		break;
 	case SERVICE_CONTROL_POWEREVENT:
 		LOGI("SERVICE_CONTROL_POWEREVENT");
+		LOGI("dwEventType 0x%lx", dwEventType);
 		if (dwEventType == PBT_POWERSETTINGCHANGE)
 		{
 			//POWERBROADCAST_SETTING* setting = (POWERBROADCAST_SETTING*)lpEventData;
@@ -140,6 +140,36 @@ DWORD WINAPI ServiceCtrlHandler
 }
 
 
+#if 1
+static ULONG DeviceNotifyCallbackRoutine
+(
+	PVOID Context,
+	ULONG Type,			// PBT_APMSUSPEND, PBT_APMRESUMESUSPEND, or PBT_APMRESUMEAUTOMATIC
+	PVOID Setting		// Unused
+)
+{
+	LOGI("DeviceNotifyCallbackRoutine");
+	if (Type == PBT_APMSUSPEND)
+	{
+		turboledz_pause_all_devices();
+		LOGI("Devices paused.");
+	}
+	if (Type == PBT_APMRESUMEAUTOMATIC)
+	{
+		turboledz_paused = 0;
+		LOGI("Device unpaused.");
+	}
+	return 0;
+}
+
+static DEVICE_NOTIFY_SUBSCRIBE_PARAMETERS notifycb =
+{
+	DeviceNotifyCallbackRoutine,
+	NULL,
+};
+#endif
+
+
 VOID WINAPI ServiceMain(DWORD argc, LPTSTR* argv)
 {
 	sshandle = RegisterServiceCtrlHandlerExA
@@ -158,6 +188,36 @@ VOID WINAPI ServiceMain(DWORD argc, LPTSTR* argv)
 	{
 		LOGI("Service Control Handler for TurboLEDz has been registered.");
 	}
+
+#if 1
+	HPOWERNOTIFY registration;
+	const DWORD registered = PowerRegisterSuspendResumeNotification
+	(
+		DEVICE_NOTIFY_CALLBACK,
+		&notifycb,
+		&registration
+	);
+	if (registered != ERROR_SUCCESS)
+	{
+		const DWORD err = GetLastError();
+		LOGI("PowerRegisterSuspendResumeNotification failed with error 0x%lx", err);
+	}
+#endif
+
+#if 0
+	// Ask for power setting notifications.
+	HPOWERNOTIFY powernoti = RegisterPowerSettingNotification
+	(
+		sshandle,
+		&GUID_SYSTEM_AWAYMODE,
+		DEVICE_NOTIFY_SERVICE_HANDLE
+	);
+	if (!powernoti)
+	{
+		const DWORD err = GetLastError();
+		LOGI("RegisterPowerSettingNotification() failed with error 0x%lx", err);
+	}
+#endif
 
 	// Tell the service controller we are starting
 	memset(&servstat, 0, sizeof(servstat));
