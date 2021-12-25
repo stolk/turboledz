@@ -111,6 +111,7 @@ void cpuinf_get_usages( int num, float* usages )
 	static int first = 1;
 
 	int res = GetSystemTimes((FILETIME*)t_curr + 0, (FILETIME*)t_curr + 1, (FILETIME*)t_curr + 2);
+	(void)res;
 	assert(res);
 	if (first)
 	{
