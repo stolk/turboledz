@@ -34,7 +34,7 @@ This daemon depends on two system libraries. Before building, make sure you have
 sudo apt install libudev-dev libhidapi-dev
 ```
 
-## Building
+## Building (Linux)
 
 To build the daemon, use:
 ```
@@ -47,13 +47,30 @@ $ make turboledz-1.0.deb
 $ sudo dpkg -i turboledz-1.0.deb
 ```
 
-## Running
+## Running (Linux)
 
 Turbo LEDz devices show up a rawhid devices in `/dev/hidrawX` which need to have user access `rwx`.
 This can be automatically set with a udev rule.
 
 You can run turboledzd straight from the command-line, as user, to test.
 The Debian package will set up a systemd service, and run the process under the daemon user.
+
+## Building (Windows)
+
+Windows support is experimental.
+Unlike the Linux version, it does not run in userspace, but as a service with elevated privileges.
+You need to build libhidapi first.
+The Visual C solution has 3 targets.
+
+1. The service process itself.
+2. The service installer (which creates the system service.)
+3. The MSI install package.
+
+The MSI install will run the installer and start the service after installation.
+If anything goes wrong, examine the `c:/temp/turboledzinstall.log` and `c:/temp/turboledzservice.log` files.
+
+Currently, there is only Windows support for TurboLEDz model 88s.
+The 108c model is not yet supported.
 
 ## Plugging In
 
