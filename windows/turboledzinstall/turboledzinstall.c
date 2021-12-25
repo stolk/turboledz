@@ -110,10 +110,34 @@ int main( int argc, char* argv[] )
 			LOGI("Failed to open service.");
 			return 4;
 		}
-		DeleteService(service);
+		SERVICE_STATUS servstat;
+		const int stopped = ControlService
+		(
+			service,
+			SERVICE_CONTROL_STOP,
+			&servstat
+		);
+		if (!stopped)
+		{
+			const DWORD err = GetLastError();
+			LOGI("Failed to stop service. Err=0x%lx", err);
+		}
+		if (DeleteService(service))
+		{
+			LOGI("Deleted turboledz service.");
+		}
+		else
+		{
+			const DWORD err = GetLastError();
+			LOGI("Failed to delete turboledz service. Err = 0x%lx", err);
+		}
 		CloseServiceHandle(service);
 		CloseServiceHandle(scm);
 		return 0;
+	}
+	else
+	{
+		LOGI("Creating service...");
 	}
 	
 	// If we are not removing the service, we are creating it.
