@@ -189,7 +189,7 @@ VOID WINAPI ServiceMain(DWORD argc, LPTSTR* argv)
 		LOGI("Service Control Handler for TurboLEDz has been registered.");
 	}
 
-#if 1
+	// Subscribe to suspend/resume notifications.
 	HPOWERNOTIFY registration;
 	const DWORD registered = PowerRegisterSuspendResumeNotification
 	(
@@ -202,22 +202,6 @@ VOID WINAPI ServiceMain(DWORD argc, LPTSTR* argv)
 		const DWORD err = GetLastError();
 		LOGI("PowerRegisterSuspendResumeNotification failed with error 0x%lx", err);
 	}
-#endif
-
-#if 0
-	// Ask for power setting notifications.
-	HPOWERNOTIFY powernoti = RegisterPowerSettingNotification
-	(
-		sshandle,
-		&GUID_SYSTEM_AWAYMODE,
-		DEVICE_NOTIFY_SERVICE_HANDLE
-	);
-	if (!powernoti)
-	{
-		const DWORD err = GetLastError();
-		LOGI("RegisterPowerSettingNotification() failed with error 0x%lx", err);
-	}
-#endif
 
 	// Tell the service controller we are starting
 	memset(&servstat, 0, sizeof(servstat));
@@ -229,10 +213,7 @@ VOID WINAPI ServiceMain(DWORD argc, LPTSTR* argv)
 	servstat.dwCheckPoint = 0;
 
 	if (SetServiceStatus(sshandle, &servstat) == FALSE)
-	{
 		LOGI("SetServiceStatus() failed when setting SERVICE_START_PENDING.");
-		return;
-	}
 
 	/*
 	 * Perform tasks neccesary to start the service here
@@ -241,7 +222,19 @@ VOID WINAPI ServiceMain(DWORD argc, LPTSTR* argv)
 	if (initres)
 	{
 		LOGI("turboledz_init() failed, and returned %d", initres);
+		// Tell SCM that we were not able to start.
+		servstat.dwCurrentState = SERVICE_STOPPED;
+		servstat.dwWin32ExitCode = 99;
+		if (SetServiceStatus(sshandle, &servstat) == FALSE)
+			LOGI("SetServiceStatus() failed when setting SERVICE_STOPPED.");
 		return;
+	}
+	else
+	{
+		LOGI("turboledz_init() succeeded and found %d/%d virtual/physical cpus.",
+			cpuinf_num_virtual_cores,
+			cpuinf_num_physical_cores
+		);
 	}
 
 	// Tell the service controller we are started

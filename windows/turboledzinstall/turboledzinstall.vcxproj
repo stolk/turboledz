@@ -137,6 +137,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <Version>1.1</Version>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
