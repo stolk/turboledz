@@ -117,9 +117,9 @@ int cpuinf_init(void)
 		cpuinf_freq_bas[i] = 0;
 		fprintf
 		(
-			f, "cpu %2d (core %2d)\n", 
+			f, "cpu %2d (%s)\n", 
 			i,
-			cpuinf_coreid[i]
+			cpuinf_coreid[i] == i ? "primary" : "secondary"
 		);
 	}
 
