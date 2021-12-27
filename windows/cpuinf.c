@@ -63,7 +63,7 @@ static int cpuinf_examine_cores(FILE* f, int num_cpus)
 		assert(current_info->Relationship == RelationProcessorCore);
 		smt[num_phys] = current_info->Processor.Flags == LTP_PC_SMT ? 1 : 0;
 		const int grpcnt = current_info->Processor.GroupCount;
-		fprintf(f, "grpcnt = %d\n", grpcnt);
+		assert(grpcnt == 1);
 		fflush(f);
 		for (int g = 0; g < grpcnt; ++g)
 		{
@@ -107,7 +107,7 @@ int cpuinf_init(void)
 	assert( num_cpus <= CPUINF_MAX );
 	assert( num_cpus >= 1 );
 
-	cpuinf_num_virtual_cores = num_cpus;
+	cpuinf_num_virtual_cores  = num_cpus;
 	cpuinf_num_physical_cores = cpuinf_examine_cores(f, num_cpus);
 
 	for ( int i=0; i<num_cpus; ++i )
@@ -166,10 +166,10 @@ typedef struct _PROCESSOR_POWER_INFORMATION
 	ULONG CurrentIdleState;
 } PROCESSOR_POWER_INFORMATION, * PPROCESSOR_POWER_INFORMATION;
 
+static 	PROCESSOR_POWER_INFORMATION pinf[CPUINF_MAX];
 
 int cpuinf_get_cur_freq_stages( enum freq_stage* stages, int sz )
 {
-	PROCESSOR_POWER_INFORMATION pinf[cpuinf_num_virtual_cores];
 	const NTSTATUS gotinfo = CallNtPowerInformation
 	(
 		ProcessorInformation,
