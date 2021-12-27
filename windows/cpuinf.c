@@ -93,7 +93,10 @@ static int cpuinf_examine_cores(FILE* f, int num_cpus)
 // Returns the number of virtual cores.
 int cpuinf_init(void)
 {
-	FILE* f = fopen("c:/temp/cpuinf.log", "wb");
+	FILE* f = 0;
+#if !defined(STANDALONECPUINF)
+	f = fopen("c:/temp/cpuinf.log", "wb");
+#endif
 	if (!f) f = stdout;
 
 	// How many virtual cores in this system?
@@ -113,40 +116,31 @@ int cpuinf_init(void)
 		cpuinf_freq_bas[i] = 0;
 		fprintf
 		(
-			f, "cpu %2d (core %2d)  minfreq: %4dMHz  basefreq: %4dMHz  maxfreq: %4dMHz\n", 
+			f, "cpu %2d (core %2d)\n", 
 			i,
-			cpuinf_coreid[i],
-			cpuinf_freq_min[i]/1000,
-			cpuinf_freq_bas[i]/1000,
-			cpuinf_freq_max[i]/1000
+			cpuinf_coreid[i]
 		);
 	}
 
 	fprintf( f, "Number of virtual cores:  %2d\n", cpuinf_num_virtual_cores );
 	fprintf( f, "Number of physical cores: %2d\n", cpuinf_num_physical_cores);
+
+	enum freq_stage stages[cpuinf_num_physical_cores];
+	cpuinf_get_cur_freq_stages(stages, cpuinf_num_physical_cores);
+#if !defined(STANDALONECPUINF)
 	fclose(f);
+#endif
 
 	return num_cpus;
 }
 
 
-static int cpuinf_get_cur_freq( int cpunr )
+static int cpuinf_get_cur_freq_stage( ULONG low, ULONG cur, ULONG max )
 {
-
-
-	return 0;
-}
-
-
-static int cpuinf_get_cur_freq_stage( int cpunr )
-{
-	const int lo = cpuinf_freq_min[cpunr];
-	const int hi = cpuinf_freq_max[cpunr];
-	const int range = hi - lo;
-	const int th0 = lo + range/4;
-	const int th1 = lo + range/2;
-	const int th2 = hi - range/4;
-	const int cur = cpuinf_get_cur_freq( cpunr );
+	const ULONG range = max - low;
+	const ULONG th0 = low + range/4;
+	const ULONG th1 = low + range/2;
+	const ULONG th2 = max - range/4;
 	if ( cur >= th2 )
 		return FREQ_STAGE_MAX;
 	else if ( cur > th1 )
@@ -189,8 +183,14 @@ int cpuinf_get_cur_freq_stages( enum freq_stage* stages, int sz )
 
 	int cnt = 0;
 	for ( int i=0; i<cpuinf_num_virtual_cores; ++i )
-		if ( cpuinf_coreid[i] == i && cnt<sz )
-			stages[cnt++] = cpuinf_get_cur_freq_stage( i );
+		if (cpuinf_coreid[i] == i && cnt < sz)
+		{
+			stages[cnt] = cpuinf_get_cur_freq_stage(0, pinf[i].CurrentMhz, pinf[i].MaxMhz);
+#if defined(STANDALONECPUFREQ)
+			fprintf(stdout, "virtual core %d cur:%luMHz stage:%d\n", i, pinf[i].CurrentMhz, stages[cnt]);
+#endif
+			cnt++;
+		}
 	return cnt;
 }
 
@@ -227,3 +227,10 @@ void cpuinf_get_usages( int num, float* usages )
 	memcpy(t_prev, t_curr, sizeof(t_prev));
 }
 
+#if defined(STANDALONECPUINF)
+int main(int argc, char* argv[])
+{
+	cpuinf_init();
+	return 0;
+}
+#endif
