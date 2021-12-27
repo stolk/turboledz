@@ -31,7 +31,8 @@ _ACRTIMP void __cdecl _wassert(
 int	cpuinf_freq_min[CPUINF_MAX];
 int	cpuinf_freq_bas[CPUINF_MAX];
 int	cpuinf_freq_max[CPUINF_MAX];
-int	cpuinf_coreid  [CPUINF_MAX];
+int cpuinf_coreid  [CPUINF_MAX];
+
 
 FILE*	cpuinf_freq_cur_file[CPUINF_MAX];
 
@@ -75,7 +76,7 @@ static int cpuinf_examine_cores(FILE* f, int num_cpus)
 				aff = aff >> 1;
 				coreid++;
 			}
-			cpuinf_coreid[num_phys] = coreid;
+			cpuinf_coreid[coreid] = coreid;
 		}
 		++num_phys;
 	} while (offset < length);
@@ -186,7 +187,7 @@ int cpuinf_get_cur_freq_stages( enum freq_stage* stages, int sz )
 		if (cpuinf_coreid[i] == i && cnt < sz)
 		{
 			stages[cnt] = cpuinf_get_cur_freq_stage(0, pinf[i].CurrentMhz, pinf[i].MaxMhz);
-#if defined(STANDALONECPUFREQ)
+#if defined(STANDALONECPUINF)
 			fprintf(stdout, "virtual core %d cur:%luMHz stage:%d\n", i, pinf[i].CurrentMhz, stages[cnt]);
 #endif
 			cnt++;
