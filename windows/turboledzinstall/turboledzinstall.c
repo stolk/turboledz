@@ -168,6 +168,23 @@ int main( int argc, char* argv[] )
 		return 5;
 	}
 
+	// Describe the service
+	SERVICE_DESCRIPTION sdesc =
+	{
+		"TurboLEDz control",
+	};
+	const int described = ChangeServiceConfig2A
+	(
+		service,
+		SERVICE_CONFIG_DESCRIPTION,
+		&sdesc
+	);
+	if (!described)
+	{
+		const DWORD err = GetLastError();
+		LOGI("Failed to set service description. Err=0x%lx", err);
+	}
+
 	// Query the service.
 	SERVICE_STATUS servstat;
 	const int queried = QueryServiceStatus(service, &servstat);
