@@ -6,7 +6,7 @@ Daemon to control Turbo LEDz devices.
 
 ## Introduction
 
-With the turboledzd daemon, you can display OS statistics, like CPU load, on a Turbo LEDz USB device.
+With the turboledzd daemon, you can display OS statistics, like CPU load, on a [Turbo LEDz USB device](https://www.tindie.com/stores/stolk/).
 
 The daemon is typically started as a system service using:
 
@@ -69,8 +69,7 @@ The Visual C solution has 3 targets.
 The MSI install will run the installer and start the service after installation.
 If anything goes wrong, examine the `c:/temp/turboledzinstall.log` and `c:/temp/turboledzservice.log` files.
 
-Currently, there is only Windows support for TurboLEDz model 88s.
-The 108c model is not yet supported.
+Pre-built drivers [are available](https://turboledz.com/drivers.html).
 
 ## Plugging In
 
