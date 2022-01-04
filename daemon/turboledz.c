@@ -270,6 +270,12 @@ int turboledz_select_and_open_device( struct hid_device_info* devs )
 }
 
 
+// CPU Load stats.
+static float usages[ CPUINF_MAX ];
+
+// CPU Core Frequency stats.
+static enum freq_stage stages[ CPUINF_MAX ];
+
 int turboledz_service( void )
 {
 	const int delay = 1000000 / opt_freq;	// uSeconds to wait between writes.
@@ -278,24 +284,38 @@ int turboledz_service( void )
 		if ( !turboledz_paused )
 		{
 			assert(turboledz_numcpu>0);
-			float usages[ turboledz_numcpu ];
-			cpuinf_get_usages( 1, usages );
+			// For 810c devices, we collect different stats (freqs) than other devices (loads.)
+			int num810c = 0;
+			for ( int i=0; i<numdevs; ++i )
+				num810c += ( mod[i] == MODEL_810c ? 1 : 0 );
+			int numother = numdevs - num810c;
+			// Get CPU load.
+			if ( numother > 0 )
+				cpuinf_get_usages( 1, usages );
+			// Get freq stages.
+			int numfr = 0;
+			if ( num810c > 0 )
+				numfr = cpuinf_get_cur_freq_stages( stages, CPUINF_MAX );
+			int frqoff = 0;
+
 			for ( int i=0; i<numdevs; ++i )
 			{
 				hid_device* hd = hds[i];
 				if ( mod[i] == MODEL_810c )
 				{
-					enum freq_stage stages[ CPUINF_MAX ];
-					const int numfr = cpuinf_get_cur_freq_stages( stages, CPUINF_MAX );
 					uint32_t grn=0;
 					uint32_t red=0;
 					uint32_t bit=1;
-					for ( int i=0; i<numfr; ++i )
+					for ( int j=0; j<10; ++j )
 					{
-						enum freq_stage s = stages[i];
-						grn |= ( (s==FREQ_STAGE_LOW || s==FREQ_STAGE_MID) ? bit : 0 );
-						red |= ( (s==FREQ_STAGE_MID || s==FREQ_STAGE_MAX) ? bit : 0 );
-						bit = bit<<1;
+						const int idx = (frqoff+j);
+						if ( idx < numfr )
+						{
+							enum freq_stage s = stages[idx];
+							grn |= ( (s==FREQ_STAGE_LOW || s==FREQ_STAGE_MID) ? bit : 0 );
+							red |= ( (s==FREQ_STAGE_MID || s==FREQ_STAGE_MAX) ? bit : 0 );
+							bit = bit<<1;
+						}
 					}
 					uint8_t rep[5] =
 					{
@@ -313,6 +333,7 @@ int turboledz_service( void )
 						turboledz_cleanup();
 						exit(EX_IOERR);
 					}
+					frqoff += 10;
 				}
 				else
 				{
