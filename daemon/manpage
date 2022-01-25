@@ -11,6 +11,10 @@ turboledzd is a daemon process that is started by systemd at boot-time to contro
 turboledzd does not take any options, but you can control its function via the configuration file at /etc/turboledz.conf
 .SH CONFIGURATION FILE
 The configuration file is located at /etc/turboledz.conf and supports the following options:
+.SS model
+Normally, models are autodetected. But if that goes wrong, you can force the model.
+  model=88s
+  model=810c
 .SS mode
 This sets the mode on what to graph: cpu, gpu, net, etc. Currently, only cpu is implemented.
   mode=cpu

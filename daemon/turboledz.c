@@ -45,7 +45,7 @@ enum model
 	MODEL_108,		// 10 bars of 8 segments.
 	MODEL_810,		// 10 bars of 8 segments.
 	MODEL_810s,		// 8 bars of 10 segments, single driver.
-	MODEL_88s,		// 8 bars of 8 segments, single dirver.
+	MODEL_88s,		// 8 bars of 8 segments, single driver.
 	MODEL_810c,		// 8 bars of 10 segments, colour LEDs.
 	MODEL_COUNT
 };
@@ -81,6 +81,9 @@ int			opt_freq=10;
 
 // Specified in config file: currently only "cpu" is implemented.
 char			opt_mode[80];
+
+// Specified in config file: force the model detection.
+char			opt_model[80];
 
 // Specified in config file: how long do we wait before operations, to give udev daemon time to apply rules.
 int			opt_launchpause;
@@ -202,6 +205,16 @@ int turboledz_select_and_open_device( struct hid_device_info* devs )
 					models[count] = get_model(prodname);
 					count++;
 				}
+			}
+			else if ( strlen(opt_model) )
+			{
+				// Ugh... I sent out 2 devices that did not have the USB PRODUCT report a proper Turbo LEDz name.
+				filenames[count] = cur_dev->path;
+				if ( !strcmp( opt_model, "88s" ) )
+					models[count] = MODEL_88s;
+				if ( !strcmp( opt_model, "108c" ) )
+					models[count] = MODEL_810c;
+				count++;
 			}
 		}
 		else

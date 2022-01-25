@@ -64,6 +64,11 @@ static int read_config(void)
 					strncpy( opt_mode, s+5, sizeof(opt_mode)-1 );
 					parsed++;
 				}
+				if ( !strncmp( s, "model=", 6 ) )
+				{
+					strncpy( opt_model, s+6, sizeof(opt_model)-1 );
+					parsed++;
+				}
 				if ( !strncmp( s, "launchpause=", 12 ) )
 				{
 					opt_launchpause = atoi( s+12 );

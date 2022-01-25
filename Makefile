@@ -7,7 +7,7 @@ CC=cc
 
 CFLAGS=-g -O2 -Wall -Wextra # -static
 
-PKG=turboledz-1.1
+PKG=turboledz-1.2
 
 daemon/turboledzd: daemon/turboledzd.c daemon/cpuinf.c daemon/cpuinf.h daemon/turboledz.h daemon/turboledz.c
 	$(CC) $(CFLAGS) daemon/turboledzd.c daemon/turboledz.c daemon/cpuinf.c -o daemon/turboledzd -lhidapi-hidraw -ludev

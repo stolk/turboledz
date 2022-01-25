@@ -9,6 +9,9 @@ extern int		opt_freq;
 // Specified in config file: currently only "cpu" is implemented.
 extern char		opt_mode[80];
 
+// Specified in config file: override model detection.
+extern char		opt_model[80];
+
 // Specified in config file: how long do we wait before operations, to give udev daemon time to apply rules.
 extern int		opt_launchpause;
 
