@@ -372,16 +372,29 @@ int turboledz_service( void )
 }
 
 
-int turboledz_init(void)
+int turboledz_init(FILE* errorlogf)
 {
+	if (!errorlogf) errorlogf = stderr;
 	turboledz_finished = 0;
+	fprintf(errorlogf, "Examining CPUs...\n");
+	fflush(errorlogf);
 	turboledz_numcpu = cpuinf_init();
-	if ( turboledz_numcpu <= 0 ) return 1;
-
+	if (turboledz_numcpu <= 0)
+	{
+		fprintf(errorlogf, "cpuinf_init() returned %d\n", turboledz_numcpu);
+		fflush(errorlogf);
+		return 1;
+	}
 	if (hid_init())
 	{
-		fprintf( stderr,"hid_init() failed: %ls\n", hid_error(0) );
+		fprintf( errorlogf,"hid_init() failed: %ls\n", hid_error(0) );
+		fflush(errorlogf);
 		return 1;
+	}
+	else
+	{
+		fprintf(errorlogf, "hid_init() succeeded.\n");
+		fflush(errorlogf);
 	}
 
 	struct hid_device_info* devs_adafruit=0;
@@ -393,35 +406,42 @@ int turboledz_init(void)
 
 	if ( !devs_arduino && !devs_adafruit )
 	{
-		fprintf(stderr,"No Turbo LEDz devices were found.\n");
+		fprintf(errorlogf,"No Turbo LEDz devices were found.\n");
+		fflush(errorlogf);
 		return 1;
 	}
 
 	if ( devs_arduino )
 	{
-		fprintf(stderr, "Examining arduino devices...\n");
+		fprintf(errorlogf, "Examining arduino devices...\n");
+		fflush(errorlogf);
 		const int num = turboledz_select_and_open_device( devs_arduino );
-		fprintf(stderr, "Opened %d devices.\n",num);
+		fprintf(errorlogf, "Opened %d devices.\n",num);
+		fflush(errorlogf);
 		hid_free_enumeration(devs_arduino);
 	}
 
 #if TRY_ADAFRUIT_DEVICES
 	if ( devs_adafruit )
 	{
-		fprintf(stderr, "Examining adafruit devices...\n");
+		fprintf(errorlogf, "Examining adafruit devices...\n");
+		fflush(errorlogf);
 		const int num = turboledz_select_and_open_device( devs_adafruit );
-		fprintf(stderr, "Opened %d devices.\n",num);
+		fprintf(errorlogf, "Opened %d devices.\n",num);
 		hid_free_enumeration(devs_adafruit);
+		fflush(errorlogf);
 	}
 #endif
 
 	if ( numdevs== 0 )
 	{
-		fprintf(stderr,"Failed to select and open device.\n");
+		fprintf(errorlogf,"Failed to select and open device.\n");
+		fflush(errorlogf);
 		return 1;
 	}
 
-	fprintf( stderr, "Mode=%s Freq=%d numcpu=%d\n", opt_mode, opt_freq, turboledz_numcpu );
+	fprintf(errorlogf, "Mode=%s Freq=%d numcpu=%d\n", opt_mode, opt_freq, turboledz_numcpu );
+	fflush(errorlogf);
 	return 0;
 }
 

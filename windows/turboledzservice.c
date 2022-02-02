@@ -218,7 +218,8 @@ VOID WINAPI ServiceMain(DWORD argc, LPTSTR* argv)
 	/*
 	 * Perform tasks neccesary to start the service here
 	 */
-	int initres = turboledz_init();
+	LOGI("Calling turboledz_init()");
+	int initres = turboledz_init(logf);
 	if (initres)
 	{
 		LOGI("turboledz_init() failed, and returned %d", initres);

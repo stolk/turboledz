@@ -85,7 +85,9 @@ static int cpuinf_examine_cores(FILE* f, int num_cpus)
 	int totalsmt = 0;
 	for (int i = 0; i < num_phys; ++i)
 		totalsmt += smt[i];
-	assert(totalsmt == 0 || totalsmt == num_phys);
+
+	if (totalsmt > 0 && totalsmt < num_phys)
+		fprintf(f, "Hmm... both HT and non-HT cores in this system!\n");
 
 	return num_phys;
 }

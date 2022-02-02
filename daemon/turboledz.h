@@ -34,5 +34,5 @@ extern int turboledz_select_and_open_device( struct hid_device_info* devs );
 
 extern int turboledz_service( void );
 
-extern int turboledz_init(void);
+extern int turboledz_init(FILE* errorlogf);
 
