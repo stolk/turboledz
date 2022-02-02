@@ -123,7 +123,7 @@ int main( int argc, char* argv[] )
 		fprintf(stderr, "Commencing...\n");
 	}
 
-	int initresult = turboledz_init();
+	int initresult = turboledz_init(stderr);
 	if ( initresult )
 		return initresult;
 
