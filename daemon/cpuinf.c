@@ -2,7 +2,7 @@
 #include <stdio.h>	// for fopen()
 #include <stdlib.h>	// for atoi()
 #include <unistd.h>	// for sysconf()
-#include <inttypes.h>	// for uint32_t
+#include <inttypes.h>	// for uint64_t
 #include <string.h>	// for memset()
 
 #include "cpuinf.h"
@@ -141,21 +141,22 @@ int cpuinf_get_cur_freq_stages( enum freq_stage* stages, int sz )
 
 
 
-static uint32_t* prev=0;	// Per cpu, a set of 7 Jiffies counts.
-static uint32_t* curr=0;	// Per cpu, a set of 7 Jiffies counts.
+static uint64_t* prev=0;	// Per cpu, a set of 7 Jiffies counts.
+static uint64_t* curr=0;	// Per cpu, a set of 7 Jiffies counts.
 
 // Reads for each cpu: how many jiffies were spent in each state:
 //   user, nice, system, idle, iowait, irq, softirq
-void cpuinf_get_usages( int num, float* usages )
+void cpuinf_get_usages( int num, float* usages, uint64_t* jiffies_of_work )
 {
 	// First invokation, we should allocate buffers, sized to the number of CPUs in this system.
 	if ( !prev || !curr )
 	{
-		const size_t sz = sizeof(uint32_t) * 7 * num;
-		prev = (uint32_t*) malloc(sz);
-		curr = (uint32_t*) malloc(sz);
+		const size_t sz = sizeof(uint64_t) * 7 * num;
+		prev = (uint64_t*) malloc(sz);
+		curr = (uint64_t*) malloc(sz);
 		memset( prev, 0, sz );
 		memset( curr, 0, sz );
+		jiffies_of_work = 0;
 	}
 
 	static FILE* f = 0;
@@ -176,10 +177,10 @@ void cpuinf_get_usages( int num, float* usages )
 		char tag[16];
 		strncpy( tag,"cpu ", sizeof(tag) );
 
-		uint32_t* prv = prev + cpu * 7;
-		uint32_t* cur = curr + cpu * 7;
+		uint64_t* prv = prev + cpu * 7;
+		uint64_t* cur = curr + cpu * 7;
 
-		// If num is larger than 1, we should ready per-cpu stats, instead of the aggragate stat.
+		// If num is larger than 1, we should ready per-cpu stats, instead of the aggregate stat.
 		if ( num > 1 )
 			snprintf( tag, sizeof(tag), "cpu%d", cpu );
 
@@ -190,28 +191,30 @@ void cpuinf_get_usages( int num, float* usages )
 		{
 			// Read cpu specific stats.
 			int cpunr;
-			const int numscanned = sscanf( s, "cpu%d %u %u %u %u %u %u %u", &cpunr, cur+0, cur+1, cur+2, cur+3, cur+4, cur+5, cur+6 );
+			const int numscanned = sscanf( s, "cpu%d %lu %lu %lu %lu %lu %lu %lu", &cpunr, cur+0, cur+1, cur+2, cur+3, cur+4, cur+5, cur+6 );
 			assert( numscanned == 8 );
 			assert( cpunr == cpu );
 		}
 		else
 		{
 			// Only read the aggregate stat, we don't need the break-out per cpu.
-			const int numscanned = sscanf( s, "cpu %u %u %u %u %u %u %u", cur+0, cur+1, cur+2, cur+3, cur+4, cur+5, cur+6 );
+			const int numscanned = sscanf( s, "cpu %lu %lu %lu %lu %lu %lu %lu", cur+0, cur+1, cur+2, cur+3, cur+4, cur+5, cur+6 );
 			assert( numscanned == 7 );
 		}
 
-		uint32_t deltas[7];
+		uint64_t deltas[7];
 		for ( int i=0; i<7; ++i )
 		{
 			deltas[i] = cur[i] - prv[i];
 			prv[i] = cur[i];
 		}
-		const uint32_t user = deltas[0];
-		const uint32_t syst = deltas[2];
-		const uint32_t idle = deltas[3];
-		uint32_t work = user + syst;
+		const uint64_t user = deltas[0];
+		const uint64_t syst = deltas[2];
+		const uint64_t idle = deltas[3];
+		const uint64_t work = user + syst;
 		usages[ cpu ] = work / (float) (user+syst+idle);
+		if ( jiffies_of_work )
+			jiffies_of_work[ cpu ] = work;
 	}
 }
 

@@ -5,7 +5,7 @@
 
 CC=cc
 
-CFLAGS=-g -O2 -Wall -Wextra # -static
+CFLAGS=-g -O2 -Wall -Wextra -DSUPPORT_ODO # -static
 
 PKG=turboledz-1.2
 
@@ -27,9 +27,11 @@ $(PKG).deb: daemon/turboledzd daemon/manpage
 	cp ./systemd/turboledz.service $(PKG)/lib/systemd/system/
 	mkdir -p $(PKG)/lib/systemd/system-sleep
 	cp ./systemd/turboledz.sleep $(PKG)/lib/systemd/system-sleep/
+	mkdir -p $(PKG)/var/lib/turboledz
 	mkdir -p $(PKG)/DEBIAN
 	cp ./DEBIAN/* $(PKG)/DEBIAN/
 	sudo chown root:root -R $(PKG)
+	sudo chown daemon.daemon $(PKG)/var/lib/turboledz
 	dpkg -b $(PKG)
 
 package: $(PKG).deb

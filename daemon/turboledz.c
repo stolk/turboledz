@@ -38,6 +38,9 @@
 // More than 6 Turbo LEDz devices in a single PC would be silly.
 #define MAXDEVS			6
 
+// Where we store odometer state
+#define ODOMETERSTATEFILENAME	"/var/lib/turboledz/odometer.state"
+
 enum model
 {
 	MODEL_UNKNOWN=0,
@@ -47,6 +50,7 @@ enum model
 	MODEL_810s,		// 8 bars of 10 segments, single driver.
 	MODEL_88s,		// 8 bars of 8 segments, single driver.
 	MODEL_810c,		// 8 bars of 10 segments, colour LEDs.
+	MODEL_ODO,		// odometer: 14 digits of 7 segments.
 	MODEL_COUNT
 };
 
@@ -59,6 +63,7 @@ static const char* modelnames[ MODEL_COUNT ] =
 	"810s",
 	"88s",
 	"810c",
+	"odo",
 };
 
 // Howmany Turbo LEDz devices did we find?
@@ -94,6 +99,9 @@ int			turboledz_paused=0;
 // Set this to stop service.
 int			turboledz_finished=0;
 
+// Odometer value
+uint64_t		jiffies_counter=0;
+
 
 void turboledz_pause_all_devices(void)
 {
@@ -110,9 +118,15 @@ void turboledz_pause_all_devices(void)
 	for ( int i=0; i<numdevs; ++i )
 	{
 		hid_device* hd = hds[i];
-		const int written = hid_write( hd, rep, sizeof(rep) );
-		if (written<0)
-			fprintf( stderr, "hid_write() failed for %zu bytes with: %ls\n", sizeof(rep), hid_error(hd) );
+		if (mod[i] != MODEL_ODO)
+		{
+			const int written = hid_write( hd, rep, sizeof(rep) );
+			if (written<0)
+			{
+				const char* modelnm = modelnames[ mod[i] ];
+				fprintf( stderr, "hid_write() to %s failed for %zu bytes with: %ls\n", modelnm, sizeof(rep), hid_error(hd) );
+			}
+		}
 	}
 #if defined(_WIN32)
 	Sleep(40);
@@ -137,6 +151,16 @@ void turboledz_cleanup(void)
 	}
 	hid_exit();
 	numdevs=0;
+#if defined(SUPPORT_ODO)
+	FILE* f = fopen(ODOMETERSTATEFILENAME,"wb");
+	if (!f)
+		fprintf(stderr,"Cannot write to %s\n", ODOMETERSTATEFILENAME);
+	else
+	{
+		fprintf(f, "jiffies=%lu\n", jiffies_counter);
+		fclose(f);
+	}
+#endif
 }
 
 
@@ -154,6 +178,8 @@ static enum model get_model(const wchar_t* modelname)
 		return MODEL_108m;
 	if ( !wcscmp( modelname, L"108" ) )
 		return MODEL_108;
+	if ( !wcscmp( modelname, L"ODO" ) )
+		return MODEL_ODO;
 	return MODEL_UNKNOWN;
 }
 
@@ -286,6 +312,8 @@ int turboledz_select_and_open_device( struct hid_device_info* devs )
 // CPU Load stats.
 static float usages[ CPUINF_MAX ];
 
+static uint64_t jiffies_of_work[ CPUINF_MAX ];
+
 // CPU Core Frequency stats.
 static enum freq_stage stages[ CPUINF_MAX ];
 
@@ -304,7 +332,7 @@ int turboledz_service( void )
 			int numother = numdevs - num810c;
 			// Get CPU load.
 			if ( numother > 0 )
-				cpuinf_get_usages( 1, usages );
+				cpuinf_get_usages( 1, usages, jiffies_of_work );
 			// Get freq stages.
 			int numfr = 0;
 			if ( num810c > 0 )
@@ -348,6 +376,21 @@ int turboledz_service( void )
 					}
 					frqoff += 10;
 				}
+				else if ( mod[i] == MODEL_ODO )
+				{
+					jiffies_counter += jiffies_of_work[0];
+					uint8_t rep[9];
+					rep[0] = 0;
+					memcpy(rep+1, &jiffies_counter, 8);
+					const int written = hid_write( hd, rep, sizeof(rep) );
+					if ( written < 0 )
+					{
+						const char* modelnm = modelnames[ mod[i] ];
+						fprintf( stderr, "hid_write to %s for %zu bytes failed with: %ls\n", modelnm, sizeof(rep), hid_error(hd) );
+						turboledz_cleanup();
+						exit(EX_IOERR);
+					}
+				}
 				else
 				{
 					int bars = (int) ( 0.5f + ( (seg[i]-FLT_EPSILON) * usages[0] ) );
@@ -355,7 +398,8 @@ int turboledz_service( void )
 					const int written = hid_write( hd, rep, sizeof(rep) );
 					if ( written < 0 )
 					{
-						fprintf( stderr, "hid_write for %zu bytes failed with: %ls\n", sizeof(rep), hid_error(hd) );
+						const char* modelnm = modelnames[ mod[i] ];
+						fprintf( stderr, "hid_write to %s for %zu bytes failed with: %ls\n", modelnm, sizeof(rep), hid_error(hd) );
 						turboledz_cleanup();
 						exit(EX_IOERR);
 					}
@@ -397,10 +441,13 @@ int turboledz_init(FILE* errorlogf)
 		fflush(errorlogf);
 	}
 
-	struct hid_device_info* devs_adafruit=0;
 	struct hid_device_info* devs_arduino=0;
+	struct hid_device_info* devs_adafruit=0;
+
 #if TRY_ADAFRUIT_DEVICES
 	devs_adafruit = hid_enumerate( 0x239a, 0x801e );
+	if ( !devs_adafruit )
+		fprintf(errorlogf, "No devices with 0x239a / 0x801e type.\n");
 #endif
 	devs_arduino  = hid_enumerate( 0x2341, 0x8037 );
 
@@ -439,6 +486,22 @@ int turboledz_init(FILE* errorlogf)
 		fflush(errorlogf);
 		return 1;
 	}
+
+#if defined(SUPPORT_ODO)
+	FILE* f = fopen(ODOMETERSTATEFILENAME,"rb");
+	if (f)
+	{
+		char line[120];
+		while (fgets(line,sizeof(line),f))
+		{
+			uint64_t jiffies;
+			const int num = sscanf(line,"jiffies=%lu", &jiffies);
+			if (num==1)
+				jiffies_counter = jiffies;
+		}
+		fclose(f);
+	}
+#endif
 
 	fprintf(errorlogf, "Mode=%s Freq=%d numcpu=%d\n", opt_mode, opt_freq, turboledz_numcpu );
 	fflush(errorlogf);
