@@ -1,7 +1,7 @@
 # turboledz
 Daemon to control Turbo LEDz devices.
 
-![model810c](images/model810c.jpeg "model810c")
+![model810s](images/model810s.jpeg "model810s")
 
 
 ## Introduction
