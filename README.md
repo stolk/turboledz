@@ -27,6 +27,8 @@ When a Turbo LEDz device is plugged in, and the daemon has not yet send any data
 This gets replaced by statistical data on the CPU load (and later: Core frequencies) when the turboledzd process contacts it.
 When the host PC goes to sleep, the device will show the wave again on its display.
 
+The daemon supports [several models](https://github.com/turboledz/MODELS.md).
+
 ## Dependencies
 
 This daemon depends on two system libraries. Before building, make sure you have those  installed:
