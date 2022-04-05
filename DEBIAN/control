@@ -1,5 +1,5 @@
 Package: turboledz
-Version: 1.0
+Version: 1.2
 Architecture: amd64
 Maintainer: Bram Stolk <b.stolk@gmail.com>
 Depends: libhidapi-hidraw0
