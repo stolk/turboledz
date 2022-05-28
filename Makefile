@@ -12,6 +12,9 @@ PKG=turboledz-1.2
 daemon/turboledzd: daemon/turboledzd.c daemon/cpuinf.c daemon/cpuinf.h daemon/turboledz.h daemon/turboledz.c
 	$(CC) $(CFLAGS) daemon/turboledzd.c daemon/turboledz.c daemon/cpuinf.c -o daemon/turboledzd -lhidapi-hidraw -ludev
 
+simulator/turboledzsim: daemon/cpuinf.c daemon/cpuinf.h simulator/grapher.c simulator/grapher.h simulator/turboledzsim.c
+	$(CC) $(CFLAGS) -Idaemon/ daemon/cpuinf.c simulator/grapher.c simulator/turboledzsim.c -o simulator/turboledzsim
+
 $(PKG).deb: daemon/turboledzd daemon/manpage
 	sudo rm -rf ./$(PKG)
 	mkdir -p $(PKG)/etc
