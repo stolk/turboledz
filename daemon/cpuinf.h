@@ -26,7 +26,7 @@ extern int	cpuinf_num_physical_cores;
 extern int cpuinf_init(void);
 
 // Gets the current freq stage of all the physical cores.
-extern int cpuinf_get_cur_freq_stages( enum freq_stage* stages, int sz );
+extern int cpuinf_get_cur_freq_stages( enum freq_stage* stages, int sz, FILE* logf );
 
 // Gets the current cpu usages, possible per-core.
 void cpuinf_get_usages( int num, float* usages, uint64_t* jiffies_of_work );

@@ -229,7 +229,12 @@ int turboledz_select_and_open_device( struct hid_device_info* devs )
 				{
 					filenames[count] = cur_dev->path;
 					models[count] = get_model(prodname);
+#if SUPPORT_ODO
 					count++;
+#else
+					if (models[count] != MODEL_ODO)
+						count++;
+#endif
 				}
 			}
 			else if ( strlen(opt_model) )
@@ -299,6 +304,7 @@ int turboledz_select_and_open_device( struct hid_device_info* devs )
 		{
 			hds[ numdevs ] = handle;
 			mod[ numdevs ] = models[i];
+
 			seg[ numdevs ] = (models[i] == MODEL_108 || models[i] == MODEL_108m) ? 8 : 10;
 			numdevs++;
 			rv++;
@@ -336,7 +342,7 @@ int turboledz_service( void )
 			// Get freq stages.
 			int numfr = 0;
 			if ( num810c > 0 )
-				numfr = cpuinf_get_cur_freq_stages( stages, CPUINF_MAX );
+				numfr = cpuinf_get_cur_freq_stages( stages, CPUINF_MAX, 0 );
 			int frqoff = 0;
 
 			for ( int i=0; i<numdevs; ++i )
@@ -464,6 +470,8 @@ int turboledz_init(FILE* errorlogf)
 		fflush(errorlogf);
 		const int num = turboledz_select_and_open_device( devs_arduino );
 		fprintf(errorlogf, "Opened %d devices.\n",num);
+		for (int i=0; i<num; ++i)
+			fprintf(errorlogf, "%s\n", modelnames[mod[i]]);
 		fflush(errorlogf);
 		hid_free_enumeration(devs_arduino);
 	}

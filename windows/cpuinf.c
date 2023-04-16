@@ -129,7 +129,7 @@ int cpuinf_init(void)
 	fprintf( f, "Number of physical cores: %2d\n", cpuinf_num_physical_cores);
 
 	enum freq_stage stages[cpuinf_num_physical_cores];
-	cpuinf_get_cur_freq_stages(stages, cpuinf_num_physical_cores);
+	cpuinf_get_cur_freq_stages(stages, cpuinf_num_physical_cores, f);
 #if !defined(STANDALONECPUINF)
 	fclose(f);
 #endif
@@ -170,7 +170,7 @@ typedef struct _PROCESSOR_POWER_INFORMATION
 
 static 	PROCESSOR_POWER_INFORMATION pinf[CPUINF_MAX];
 
-int cpuinf_get_cur_freq_stages( enum freq_stage* stages, int sz )
+int cpuinf_get_cur_freq_stages( enum freq_stage* stages, int sz, FILE* logf )
 {
 	const NTSTATUS gotinfo = CallNtPowerInformation
 	(
@@ -189,9 +189,8 @@ int cpuinf_get_cur_freq_stages( enum freq_stage* stages, int sz )
 		if (cpuinf_coreid[i] == i && cnt < sz)
 		{
 			stages[cnt] = cpuinf_get_cur_freq_stage(0, pinf[i].CurrentMhz, pinf[i].MaxMhz);
-#if defined(STANDALONECPUINF)
-			fprintf(stdout, "virtual core %d cur:%luMHz stage:%d\n", i, pinf[i].CurrentMhz, stages[cnt]);
-#endif
+			if (logf)
+				fprintf(logf, "virtual core %d max:%luMHz cur:%luMHz stage:%d\n", i, pinf[i].MaxMhz, pinf[i].CurrentMhz, stages[cnt]);
 			cnt++;
 		}
 	return cnt;
