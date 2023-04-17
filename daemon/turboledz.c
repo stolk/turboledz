@@ -470,8 +470,10 @@ int turboledz_init(FILE* errorlogf)
 		fflush(errorlogf);
 		const int num = turboledz_select_and_open_device( devs_arduino );
 		fprintf(errorlogf, "Opened %d devices.\n",num);
+#if defined(_WIN32)
 		for (int i=0; i<num; ++i)
 			fprintf(errorlogf, "%s\n", modelnames[mod[i]]);
+#endif
 		fflush(errorlogf);
 		hid_free_enumeration(devs_arduino);
 	}

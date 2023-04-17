@@ -130,8 +130,9 @@ static int cpuinf_get_cur_freq_stage( int cpunr )
 }
 
 
-int cpuinf_get_cur_freq_stages( enum freq_stage* stages, int sz )
+int cpuinf_get_cur_freq_stages( enum freq_stage* stages, int sz, FILE* f )
 {
+	(void) f;
 	int cnt = 0;
 	for ( int i=0; i<cpuinf_num_virtual_cores; ++i )
 		if ( cpuinf_coreid[i] == i && cnt<sz )
