@@ -107,7 +107,8 @@ static int take_samples(int numcores)
 	};
 	int redraw=0;
 	enum freq_stage stages[numcores];
-	const int num = cpuinf_get_cur_freq_stages( stages, numcores );
+	FILE* logf = 0;
+	const int num = cpuinf_get_cur_freq_stages( stages, numcores, logf );
 	assert(num == numcores);
 	for (int core=0; core<numcores; ++core)
 	{
@@ -140,9 +141,10 @@ int main(int argc, char *argv[])
 {
 	(void) argc;
 	(void) argv;
+	FILE* logf = 0;
 	const int numvirtcores = cpuinf_init();
 	enum freq_stage stages[ numvirtcores ];
-	const int numcores = cpuinf_get_cur_freq_stages( stages, numvirtcores );
+	const int numcores = cpuinf_get_cur_freq_stages( stages, numvirtcores, logf );
 
 	ringbuffers = (ringbuf_t*) malloc(sizeof(ringbuf_t) * numcores);
 
